@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一泊2日 旅のプラン＆パンフレット作成ツール</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* メイリオ優先のフォント設定 */
+        body, input, select, textarea, button {
+            font-family: "Meiryo", "メイリオ", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "MS PGothic", sans-serif;
+        }
+
+        /* カスタム和風カラーと季節のアニメーション背景 */
+        .season-spring {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+            color: #4a2c35;
+        }
+        .season-summer {
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%);
+            color: #1b4d4f;
+        }
+        .season-autumn {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 50%, #ffcc80 100%);
+            color: #4e2a14;
+        }
+        .season-winter {
+            background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 50%, #9fa8da 100%);
+            color: #1a237e;
+        }
+
+        /* 印刷スタイル */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            body {
+                background: white;
+                color: black;
+            }
+            .brochure-card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* スクロールバー装飾 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+    <!-- ヘッダー (画面表示用) -->
+    <header class="no-print bg-slate-800 text-slate-100 py-6 px-4 shadow-md sticky top-0 z-50 border-b border-slate-700">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-compass text-amber-400 text-2xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">一泊2日 旅のしおり＆パンフレット作成</h1>
+                    <p class="text-xs text-slate-400">画像と写真で彩る風情豊かなオリジナル旅プラン</p>
+                </div>
+            </div>
+            <!-- Quick Preset Templates -->
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-slate-300 font-medium mr-1"><i class="fa-solid fa-wand-magic-sparkles text-amber-300 mr-1"></i>サンプル旅プラン:</span>
+                <button type="button" onclick="loadPreset('kyoto')" class="text-xs bg-pink-900/40 hover:bg-pink-800 text-pink-200 border border-pink-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
+                    🌸 京都（春・古都）
+                </button>
+                <button type="button" onclick="loadPreset('fukuoka')" class="text-xs bg-red-900/40 hover:bg-red-800 text-red-200 border border-red-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
+                    🍜 福岡（博多・屋台）
+                </button>
+                <button type="button" onclick="loadPreset('hokkaido')" class="text-xs bg-teal-900/40 hover:bg-teal-800 text-teal-200 border border-teal-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
+                    🌿 北海道（夏・爽快）
+                </button>
+                <button type="button" onclick="loadPreset('hakone')" class="text-xs bg-amber-900/40 hover:bg-amber-800 text-amber-200 border border-amber-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
+                    🍁 箱根（秋・紅葉）
+                </button>
+                <button type="button" onclick="loadPreset('kanazawa')" class="text-xs bg-indigo-900/40 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
+                    ❄️ 金沢（冬・雪景）
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-6xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- 左側：設定・入力フォーム -->
+        <section class="no-print lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+            <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-600"></i>
+                    旅の条件を入力
+                </h2>
+                <span class="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full font-medium">1泊2日プラン</span>
+            </div>
+
+            <form id="itineraryForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
+                <!-- 出発地 & 目的地 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">出発地 <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fa-solid fa-plane-departure absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="origin" required placeholder="例: 東京, 新大阪" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">目的地 <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fa-solid fa-location-dot absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="destination" required placeholder="例: 福岡, 京都, 箱根" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 往復日付入力 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">往路日（出発）</label>
+                        <input type="date" id="startDate" onchange="autoFillEndDate()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">復路日（帰路）</label>
+                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
+                    </div>
+                </div>
+
+                <!-- 季節とスタイル -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">季節感 <span class="text-red-500">*</span></label>
+                        <select id="season" onchange="generateBrochure()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
+                            <option value="spring">🌸 春 (桜・新緑)</option>
+                            <option value="summer">🌿 夏 (清流・海)</option>
+                            <option value="autumn">🍁 秋 (紅葉・味覚)</option>
+                            <option value="winter">❄️ 冬 (雪景色・温泉)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">旅のスタイル</label>
+                        <select id="travelStyle" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
+                            <option value="夫婦・カップル旅">夫婦・カップル旅</option>
+                            <option value="のんびり一人旅">のんびり一人旅</option>
+                            <option value="女子旅・友人旅">女子旅・友人旅</option>
+                            <option value="ファミリー旅行">ファミリー旅行</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 移動手段 -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">主な移動手段</label>
+                    <select id="transportation" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
+                        <option value="新幹線・特急電車">新幹線・特急電車</option>
+                        <option value="ドライブ・レンタカー">ドライブ・レンタカー</option>
+                        <option value="飛行機＋現地バス">飛行機＋現地バス</option>
+                        <option value="ローカル線・徒歩散策">ローカル線・徒歩散策</option>
+                    </select>
+                </div>
+
+                <!-- キャッチコピー -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">旅のテーマ / キャッチコピー</label>
+                    <input type="text" id="tagline" placeholder="例: 季節の絶景と美食に癒やされる大人旅" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
+                </div>
+
+                <!-- Day 1 入力 -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                    <h3 class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                        <span><i class="fa-solid fa-sun text-amber-500 mr-1"></i>1日目の主な予定</span>
+                    </h3>
+                    <input type="text" id="d1_morning" placeholder="午前: 出発〜到着・最初の観光" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                    <input type="text" id="d1_lunch" placeholder="昼食: 名物ランチ" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                    <input type="text" id="d1_afternoon" placeholder="午後: 主な観光・体験" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                    <input type="text" id="d1_hotel" placeholder="夕方/夜: チェックイン・夕食・温泉" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                </div>
+
+                <!-- Day 2 入力 -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                    <h3 class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                        <span><i class="fa-solid fa-moon text-indigo-400 mr-1"></i>2日目の主な予定</span>
+                    </h3>
+                    <input type="text" id="d2_morning" placeholder="午前: 朝食〜朝市や名所見学" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                    <input type="text" id="d2_lunch" placeholder="昼食: グルメランチ・カフェ" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                    <input type="text" id="d2_afternoon" placeholder="午後: お土産・散策" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                    <input type="text" id="d2_return" placeholder="夕方: 帰路" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                </div>
+
+                <!-- メモ -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">旅のメモ・持ち物など</label>
+                    <textarea id="memo" rows="2" placeholder="持ち物や予約確認など" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 outline-none transition"></textarea>
+                </div>
+
+                <button type="submit" id="btnGenerate" class="w-full bg-slate-800 hover:bg-slate-900 text-amber-400 font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-book-open"></i>
+                    パンフレットを生成・更新する
+                </button>
+            </form>
+        </section>
+
+        <!-- 右側：旅のしおり（パンフレットプレビュー） -->
+        <section class="lg:col-span-7 space-y-4">
+            
+            <!-- アクションバー -->
+            <div class="no-print flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <span class="text-xs text-slate-500 flex items-center gap-1">
+                    <i class="fa-solid fa-circle-info text-amber-600"></i>
+                    生成されたパンフレットを確認・印刷できます
+                </span>
+                <button type="button" onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-print"></i>
+                    しおりを印刷 / PDF保存
+                </button>
+            </div>
+
+            <!-- パンフレット本編 -->
+            <div id="brochure" class="brochure-card bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden transition-all duration-300">
+                
+                <!-- メインビジュアル画像付きヘッダー -->
+                <div class="relative h-56 sm:h-64 overflow-hidden bg-slate-900">
+                    <img id="mainHeroImg" src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80" alt="Main Visual" class="w-full h-full object-cover opacity-80 transition-all duration-700" onerror="handleImgError(this, 'japan')">
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8 text-white">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span id="headerSeasonBadge" class="bg-amber-500/90 text-slate-950 font-bold px-3 py-0.5 rounded-full text-xs shadow-sm">
+                                🍁 秋の旅
+                            </span>
+                            <span id="outStyle" class="bg-white/20 backdrop-blur-md px-3 py-0.5 rounded-full text-xs font-semibold">
+                                夫婦・カップル旅
+                            </span>
+                        </div>
+                        <h1 id="outDestination" class="text-3xl sm:text-4xl font-extrabold tracking-wide drop-shadow-md">
+                            箱根・芦ノ湖
+                        </h1>
+                        <p id="outTagline" class="text-xs sm:text-sm font-medium text-slate-200 mt-1 line-clamp-1 drop-shadow">
+                            静寂の森と温泉、紅葉に染まる山々を巡る癒しのひととき
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 旅の概要バー -->
+                <div class="bg-slate-800 text-slate-100 py-3 px-6 text-xs flex flex-wrap justify-between items-center border-b border-slate-700 gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-route text-amber-400"></i>
+                        <span id="outRoute">東京 発 → 箱根</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar-days text-amber-400"></i>
+                        <span id="outDate">11月10日 〜 11日 (1泊2日)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-train-subway text-amber-400"></i>
+                        <span id="outTransport">新幹線・特急電車</span>
+                    </div>
+                </div>
+
+                <!-- スケジュール・行程表メイン内容 -->
+                <div class="p-6 sm:p-8 space-y-8">
+                    
+                    <!-- DAY 1 -->
+                    <div class="relative pl-6 border-l-2 border-amber-400 space-y-4">
+                        <div class="absolute -left-[17px] top-0 bg-amber-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md">
+                            1日
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                DAY 1 : 到着とメイン観光 & 温泉宿での静やかな夜
+                            </h3>
+                            <p class="text-xs text-slate-500">初日は景勝地を巡り、お宿でゆっくりお寛ぎください</p>
+                        </div>
+
+                        <!-- タイムライン ＋ 画像グリッド -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 pt-1">
+                            <!-- スケジュール詳細 -->
+                            <div class="md:col-span-7 space-y-2.5">
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">午前</span>
+                                    <p id="outD1Morning" class="text-xs font-semibold text-slate-700 mt-1">ロマンスカーで箱根湯本へ。箱根登山電車で強羅へ</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">昼食 (ご当地グルメ)</span>
+                                    <p id="outD1Lunch" class="text-xs font-semibold text-slate-700 mt-1">強羅にて名物「豆腐かつ煮」を堪能</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">午後 (観光)</span>
+                                    <p id="outD1Afternoon" class="text-xs font-semibold text-slate-700 mt-1">箱根ロープウェイで大涌谷へ。名物「黒たまご」と絶景を楽しむ</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">夕方・宿泊</span>
+                                    <p id="outD1Hotel" class="text-xs font-semibold text-slate-700 mt-1">芦ノ湖畔の温泉旅館にチェックイン。温泉を満喫</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Day 1 フォトカード -->
+                            <div class="md:col-span-5 flex flex-col gap-3">
+                                <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
+                                    <img id="d1Img1" src="https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=600&q=80" alt="Spot Photo" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'sightseeing')">
+                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-camera mr-1"></i>観光スポット
+                                    </span>
+                                </div>
+                                <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
+                                    <img id="d1Img2" src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80" alt="Gourmet / Hotel" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'onsen')">
+                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-utensils mr-1"></i>グルメ・お宿
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DAY 2 -->
+                    <div class="relative pl-6 border-l-2 border-indigo-400 space-y-4">
+                        <div class="absolute -left-[17px] top-0 bg-indigo-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md">
+                            2日
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                DAY 2 : 景勝地巡りとお買い物 & 満足の帰路
+                            </h3>
+                            <p class="text-xs text-slate-500">季節の風景を胸に焼き付け、お土産を探しながらのんびり帰路へ</p>
+                        </div>
+
+                        <!-- タイムライン ＋ 画像グリッド -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 pt-1">
+                            <!-- スケジュール詳細 -->
+                            <div class="md:col-span-7 space-y-2.5">
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded">午前</span>
+                                    <p id="outD2Morning" class="text-xs font-semibold text-slate-700 mt-1">朝の芦ノ湖海賊船に乗船。箱根神社を参拝</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded">昼食 (グルメ)</span>
+                                    <p id="outD2Lunch" class="text-xs font-semibold text-slate-700 mt-1">湖畔のベーカリーカフェで芦ノ湖を眺めながらランチ</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded">午後 (買い物・散策)</span>
+                                    <p id="outD2Afternoon" class="text-xs font-semibold text-slate-700 mt-1">箱根湯本駅前商店街でお土産探し（温泉まんじゅう等）</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded">夕方・帰路</span>
+                                    <p id="outD2Return" class="text-xs font-semibold text-slate-700 mt-1">夕方の特急でゆったりと帰路へ</p>
+                                </div>
+                            </div>
+
+                            <!-- Day 2 フォトカード -->
+                            <div class="md:col-span-5 flex flex-col gap-3">
+                                <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
+                                    <img id="d2Img1" src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80" alt="Spot Photo 2" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'japan')">
+                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-map-location-dot mr-1"></i>立ち寄り名所
+                                    </span>
+                                </div>
+                                <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
+                                    <img id="d2Img2" src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80" alt="Gourmet Photo 2" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'food')">
+                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-bag-shopping mr-1"></i>名物・お土産
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- メモ・ワンポイントアドバイス欄 -->
+                    <div class="bg-amber-50/70 rounded-xl p-4 border border-amber-200/80">
+                        <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1.5 mb-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-600"></i> 旅のメモ・ワンポイントアドバイス
+                        </h4>
+                        <p id="outMemo" class="text-xs text-slate-700 leading-relaxed">
+                            山間部は朝夕冷え込むため羽織るものを持参すること。フリーパスを活用するとお得です。
+                        </p>
+                    </div>
+
+                    <!-- パンフレットフッター -->
+                    <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-heart text-pink-400"></i>
+                            <span>素敵な旅の思い出になりますように</span>
+                        </div>
+                        <div>
+                            <span>一泊2日 旅のプラン作成ツール</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 画像付きプリセットデータ
+        const presets = {
+            kyoto: {
+                origin: '東京駅',
+                destination: '京都・東山',
+                startDate: '',
+                endDate: '',
+                season: 'spring',
+                style: '夫婦・カップル旅',
+                transport: '新幹線・特急電車',
+                tagline: '古都の桜巡りと情緒ある町並みをゆったり歩く春の旅',
+                d1_morning: '新幹線で京都駅へ。清水寺の満開の桜景色を鑑賞',
+                d1_lunch: '祇園の老舗にて京懐石ランチと湯豆腐をいただく',
+                d1_afternoon: '哲学の道を散策。桜のトンネルを抜け、銀閣寺へ参拝',
+                d1_hotel: '鴨川沿いの町家ホテルへチェックイン。京料理の夕食',
+                d2_morning: '朝の嵐山へ移動。竹林の小径と天龍寺の庭園を鑑賞',
+                d2_lunch: '渡月橋近くで京抹茶そばと和スイーツのランチ',
+                d2_afternoon: '伏見稲荷大社を巡り、お土産に生八ツ橋や抹茶菓子を購入',
+                d2_return: '京都駅から新幹線に乗車。お弁当を食べつつ思い出を振り返る',
+                memo: '桜の季節は大変混雑するため、拝観時間は早朝がおすすめです。歩きやすいスニーカー推奨。',
+                heroImg: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1578474846511-04ba529f0b88?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80'
+            },
+            fukuoka: {
+                origin: '羽田空港',
+                destination: '福岡・博多',
+                startDate: '',
+                endDate: '',
+                season: 'autumn',
+                style: '女子旅・友人旅',
+                transport: '飛行機＋現地バス',
+                tagline: '博多グルメ満喫！太宰府散策と中洲屋台街をめぐる元気旅',
+                d1_morning: '福岡空港へ到着後、地下鉄で博多駅へ移動し荷物を預ける',
+                d1_lunch: '博多駅構内または長浜にて本格「豚骨博多ラーメン」',
+                d1_afternoon: '太宰府天満宮へ。参道で名物「梅ヶ枝餅」を味わい参拝',
+                d1_hotel: '中洲エリアのホテルにチェックイン。夜は中洲の屋台街で水炊きや串焼き',
+                d2_morning: '大濠公園を朝散策後、福岡タワー周辺を観光',
+                d2_lunch: '天神エリアで話題のカフェまたは旬の博多明太子御膳',
+                d2_afternoon: 'キャナルシティ博多でお買い物（明太子・通りもん等）',
+                d2_return: '福岡空港へ移動。空港限定スイーツを楽しみ羽田へ帰路',
+                memo: '屋台街は現金払いの店舗が多いので小銭・千円札を多めに準備すると便利です。',
+                heroImg: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=600&q=80'
+            },
+            hokkaido: {
+                origin: '羽田空港',
+                destination: '北海道・富良野',
+                startDate: '',
+                endDate: '',
+                season: 'summer',
+                style: '女子旅・友人旅',
+                transport: 'ドライブ・レンタカー',
+                tagline: '一面に広がるラベンダー畑と爽快な北海道ドライブ',
+                d1_morning: '旭川空港到着後、レンタカーでパッチワークの路・美瑛へ',
+                d1_lunch: '美瑛の丘を望むレストランで地場野菜カレーランチ',
+                d1_afternoon: '青い池と白ひげの滝を訪問。コバルトブルーの絶景に感動',
+                d1_hotel: '富良野のリゾートホテルへ。北海道産牛のバーベキューと星空観察',
+                d2_morning: 'ファーム富田で満開のラベンダー畑を満喫。ラベンダーソフト',
+                d2_lunch: '富良野オムカレーまたは手打ちそばのランチ',
+                d2_afternoon: 'チーズ工房でお買い物。限定スイーツを試食',
+                d2_return: '空港へ向かい、夜の便で爽やかな旅を締めくくる',
+                memo: '夏でも朝夕は肌寒いことがあるので薄手のカーディガンがあると便利です。',
+                heroImg: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80'
+            },
+            hakone: {
+                origin: '東京・新宿駅',
+                destination: '箱根・芦ノ湖',
+                startDate: '',
+                endDate: '',
+                season: 'autumn',
+                style: '夫婦・カップル旅',
+                transport: '新幹線・特急電車',
+                tagline: '静寂の森と温泉、紅葉に染まる山々を巡る癒しのひととき',
+                d1_morning: 'ロマンスカーで箱根湯本へ。箱根登山電車で強羅方面へ移動',
+                d1_lunch: '強羅にて名物「豆腐かつ煮」を堪能',
+                d1_afternoon: '箱根ロープウェイで大涌谷へ。名物「黒たまご」と絶景を楽しむ',
+                d1_hotel: '芦ノ湖畔の温泉旅館にチェックイン。懐石料理と露天風呂を満喫',
+                d2_morning: '朝の芦ノ湖海賊船に乗船。箱根神社を参拝し平和の鳥居で撮影',
+                d2_lunch: '湖畔のベーカリーカフェで芦ノ湖を眺めながらランチ',
+                d2_afternoon: '箱根湯本駅前商店街でお土産探し（温泉まんじゅう・寄木細工）',
+                d2_return: '夕方の特急でゆったりと帰路へ。楽しかった旅の余韻に浸る',
+                memo: '山間部は朝夕冷え込むため羽織るものを持参すること。箱根フリーパスを活用すると移動がスムーズです。',
+                heroImg: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80'
+            },
+            kanazawa: {
+                origin: '東京駅',
+                destination: '金沢・ひがし茶屋街',
+                startDate: '',
+                endDate: '',
+                season: 'winter',
+                style: 'のんびり一人旅',
+                transport: '新幹線・特急電車',
+                tagline: '雪吊りの美しい兼六園と旬のカニ・金箔文化に触れる冬旅',
+                d1_morning: '北陸新幹線で金沢駅へ。雪吊りが施された兼六園を散策',
+                d1_lunch: '近江町市場にて旬の加能ガニと鮮魚がのった豪華海鮮丼',
+                d1_afternoon: '金沢21世紀美術館で現代アートを鑑賞',
+                d1_hotel: '和モダンな旅館へ。加賀野菜と日本海の幸を贅沢に堪能',
+                d2_morning: 'ひがし茶屋街の古い街並みを散策。金箔ソフトを味わう',
+                d2_lunch: '治部煮（じぶに）などの伝統的な加賀料理ランチ',
+                d2_afternoon: '長町武家屋敷跡の雪景色を歩く。和菓子作り体験',
+                d2_return: '金沢駅でお土産（九谷焼、金箔スイーツ）を購入し帰路へ',
+                memo: '冬の金沢は足元が滑りやすいため、防水加工の効いた滑りにくいブーツが必須です。',
+                heroImg: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1578474846511-04ba529f0b88?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1583526362016-c3137c71cc3a?auto=format&fit=crop&w=600&q=80'
+            }
+        };
+
+        // 季節のバッジと表示設定
+        const seasonConfig = {
+            spring: { badge: '🌸 春の旅プラン' },
+            summer: { badge: '🌿 夏の旅プラン' },
+            autumn: { badge: '🍁 秋の旅プラン' },
+            winter: { badge: '❄️ 冬の旅プラン' }
+        };
+
+        // 画像エラーフォールバック
+        function handleImgError(img, type) {
+            const fallbackImages = {
+                japan: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
+                sightseeing: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
+                food: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+                onsen: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80'
+            };
+            img.src = fallbackImages[type] || fallbackImages.japan;
+        }
+
+        // 往路入力時に自動で復路（翌日）をセット
+        function autoFillEndDate() {
+            const startInput = document.getElementById('startDate');
+            const endInput = document.getElementById('endDate');
+            if (startInput && startInput.value) {
+                const startDate = new Date(startInput.value);
+                if (!isNaN(startDate.getTime())) {
+                    const nextDate = new Date(startDate);
+                    nextDate.setDate(startDate.getDate() + 1);
+                    const yyyy = nextDate.getFullYear();
+                    const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(nextDate.getDate()).padStart(2, '0');
+                    endInput.value = `${yyyy}-${mm}-${dd}`;
+                }
+            }
+        }
+
+        // 日付表示の整形 helper (例: 2026年11月10日(火) 〜 11日(水))
+        function formatTravelDates(startStr, endStr) {
+            if (!startStr) return '1泊2日プラン';
+            
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            const d1 = new Date(startStr);
+            if (isNaN(d1.getTime())) return startStr;
+
+            const d1Text = `${d1.getMonth() + 1}月${d1.getDate()}日(${days[d1.getDay()]})`;
+
+            if (!endStr) return `${d1Text} 〜 (1泊2日)`;
+            
+            const d2 = new Date(endStr);
+            if (isNaN(d2.getTime())) return `${d1Text} 〜`;
+
+            const d2Text = (d1.getMonth() === d2.getMonth()) 
+                ? `${d2.getDate()}日(${days[d2.getDay()]})`
+                : `${d2.getMonth() + 1}月${d2.getDate()}日(${days[d2.getDay()]})`;
+
+            return `${d1Text} 〜 ${d2Text} (1泊2日)`;
+        }
+
+        // 安全なDOM値取得ユーティリティ
+        function getInputValue(id, defaultValue = '') {
+            const el = document.getElementById(id);
+            return (el && el.value.trim() !== '') ? el.value.trim() : defaultValue;
+        }
+
+        function setInputValue(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.value = value || '';
+        }
+
+        function setTextContent(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        }
+
+        function setInnerHTML(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+
+        // フォーム送信ハンドラー
+        function handleFormSubmit(event) {
+            if (event) event.preventDefault();
+            generateBrochure();
+            return false;
+        }
+
+        // プリセット読み込み関数
+        function loadPreset(key) {
+            const data = presets[key];
+            if (!data) return;
+
+            setInputValue('origin', data.origin);
+            setInputValue('destination', data.destination);
+            setInputValue('season', data.season);
+            setInputValue('travelStyle', data.style);
+            setInputValue('transportation', data.transport);
+            setInputValue('tagline', data.tagline);
+
+            // デフォルトの日付サンプル設定
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            setInputValue('startDate', `${yyyy}-${mm}-${dd}`);
+            autoFillEndDate();
+
+            setInputValue('d1_morning', data.d1_morning);
+            setInputValue('d1_lunch', data.d1_lunch);
+            setInputValue('d1_afternoon', data.d1_afternoon);
+            setInputValue('d1_hotel', data.d1_hotel);
+
+            setInputValue('d2_morning', data.d2_morning);
+            setInputValue('d2_lunch', data.d2_lunch);
+            setInputValue('d2_afternoon', data.d2_afternoon);
+            setInputValue('d2_return', data.d2_return);
+
+            setInputValue('memo', data.memo);
+
+            // 画像の更新
+            if (data.heroImg) document.getElementById('mainHeroImg').src = data.heroImg;
+            if (data.d1Img1) document.getElementById('d1Img1').src = data.d1Img1;
+            if (data.d1Img2) document.getElementById('d1Img2').src = data.d1Img2;
+            if (data.d2Img1) document.getElementById('d2Img1').src = data.d2Img1;
+            if (data.d2Img2) document.getElementById('d2Img2').src = data.d2Img2;
+
+            generateBrochure();
+        }
+
+        // パンフレットのUI更新
+        function generateBrochure() {
+            try {
+                const origin = getInputValue('origin', '出発地');
+                const dest = getInputValue('destination', '目的地');
+                const season = getInputValue('season', 'spring');
+                const style = getInputValue('travelStyle', '夫婦・カップル旅');
+                const transport = getInputValue('transportation', '新幹線・電車');
+                const tagline = getInputValue('tagline', '心躍る素敵なひとときを過ごす旅');
+
+                const startDate = getInputValue('startDate');
+                const endDate = getInputValue('endDate');
+                const formattedDateText = formatTravelDates(startDate, endDate);
+
+                const d1m = getInputValue('d1_morning', '午前: 出発〜現地到着');
+                const d1l = getInputValue('d1_lunch', '昼食: 名物料理ランチ');
+                const d1a = getInputValue('d1_afternoon', '午後: 観光スポット散策');
+                const d1h = getInputValue('d1_hotel', '夕方: 宿チェックイン・夕食・温泉');
+
+                const d2m = getInputValue('d2_morning', '午前: 朝食〜名所巡り');
+                const d2l = getInputValue('d2_lunch', '昼食: 人気カフェ・ローカルフード');
+                const d2a = getInputValue('d2_afternoon', '午後: お買い物・街歩き');
+                const d2r = getInputValue('d2_return', '夕方: お土産を買って帰路へ');
+
+                const memo = getInputValue('memo', '特別なお土産の確認、集合時間の事前確認を忘れずに。');
+
+                // DOMへの反映
+                setTextContent('outDestination', dest);
+                setTextContent('outTagline', tagline);
+                setInnerHTML('outRoute', `<i class="fa-solid fa-route mr-1 text-amber-400"></i> ${origin} 発 → ${dest}`);
+                setInnerHTML('outDate', `<i class="fa-regular fa-calendar-days mr-1 text-amber-400"></i> ${formattedDateText}`);
+                setInnerHTML('outTransport', `<i class="fa-solid fa-bus-simple mr-1 text-amber-400"></i> ${transport}`);
+                setTextContent('outStyle', style);
+
+                setTextContent('outD1Morning', d1m);
+                setTextContent('outD1Lunch', d1l);
+                setTextContent('outD1Afternoon', d1a);
+                setTextContent('outD1Hotel', d1h);
+
+                setTextContent('outD2Morning', d2m);
+                setTextContent('outD2Lunch', d2l);
+                setTextContent('outD2Afternoon', d2a);
+                setTextContent('outD2Return', d2r);
+
+                setTextContent('outMemo', memo);
+
+                // 季節バッジの更新
+                const badgeElem = document.getElementById('headerSeasonBadge');
+                const config = seasonConfig[season] || seasonConfig.spring;
+                if (badgeElem) badgeElem.innerText = config.badge;
+
+            } catch (err) {
+                console.error('パンフレット生成中にエラーが発生しました:', err);
+            }
+        }
+
+        // 初期表示で箱根プリセットをロード
+        window.onload = function() {
+            loadPreset('hakone');
+        };
+    </script>
+</body>
+</html>
