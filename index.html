@@ -103,6 +103,26 @@
         .b-note { font-size: 16px; color: #334155; line-height: 1.55; margin-top: 4px; padding-left: 10px; border-left: 3px solid #cbd5e1; }
         .b-msg { font-size: 16px; line-height: 1.6; color: #1e293b; }
         .b-msg-name { font-weight: 700; }
+        .b-tagline { font-size: 18px; line-height: 1.5; }
+        .b-day-title { font-size: 20px; line-height: 1.4; }
+        .b-photo-label { font-size: 15px; font-weight: 700; }
+
+        /* 見本の旅ボタン（ヘッダー） */
+        .preset-btn {
+            min-height: 46px; padding: 6px 14px; font-size: 16px; font-weight: 700;
+            color: #fff; background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.55);
+            border-radius: 999px; cursor: pointer;
+        }
+        .preset-btn:hover { background: rgba(255,255,255,.25); }
+        .preset-btn:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+
+        /* 音声入力ボタン */
+        .voice-wrap { display: flex; gap: 8px; align-items: flex-start; }
+        .voice-wrap > .f-input { flex: 1; min-width: 0; }
+        .btn-mic { color: #047857; border-color: #10b981; }
+        .btn-mic:hover { background: #ecfdf5; }
+        .btn-mic.listening { color: #fff; background: #dc2626; border-color: #dc2626; animation: micPulse 1.2s ease-in-out infinite; }
+        @keyframes micPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,.5); } 50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); } }
 
         /* 印刷スタイル */
         @media print {
@@ -140,33 +160,23 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
 
     <!-- ヘッダー (画面表示用) -->
-    <header class="no-print bg-slate-800 text-slate-100 py-6 px-4 shadow-md sticky top-0 z-50 border-b border-slate-700">
+    <header class="no-print bg-slate-800 text-white py-5 px-4 shadow-md">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-compass text-amber-400 text-2xl"></i>
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-compass text-amber-400 text-3xl"></i>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wide">一泊2日 旅のしおり＆パンフレット作成</h1>
-                    <p class="text-xs text-slate-400">画像と写真で彩る風情豊かなオリジナル旅プラン</p>
+                    <h1 class="text-2xl font-bold tracking-wide">一泊2日 旅のしおり＆パンフレット作り</h1>
+                    <p class="text-base text-slate-200">ふたりで話しながら、一枚の旅のパンフレットを作りましょう</p>
                 </div>
             </div>
-            <!-- Quick Preset Templates -->
+            <!-- サンプル旅プラン -->
             <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs text-slate-300 font-medium mr-1"><i class="fa-solid fa-wand-magic-sparkles text-amber-300 mr-1"></i>サンプル旅プラン:</span>
-                <button type="button" onclick="loadPreset('kyoto')" class="text-xs bg-pink-900/40 hover:bg-pink-800 text-pink-200 border border-pink-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
-                    🌸 京都（春・古都）
-                </button>
-                <button type="button" onclick="loadPreset('fukuoka')" class="text-xs bg-red-900/40 hover:bg-red-800 text-red-200 border border-red-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
-                    🍜 福岡（博多・屋台）
-                </button>
-                <button type="button" onclick="loadPreset('hokkaido')" class="text-xs bg-teal-900/40 hover:bg-teal-800 text-teal-200 border border-teal-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
-                    🌿 北海道（夏・爽快）
-                </button>
-                <button type="button" onclick="loadPreset('hakone')" class="text-xs bg-amber-900/40 hover:bg-amber-800 text-amber-200 border border-amber-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
-                    🍁 箱根（秋・紅葉）
-                </button>
-                <button type="button" onclick="loadPreset('kanazawa')" class="text-xs bg-indigo-900/40 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/50 px-3 py-1.5 rounded-full transition flex items-center gap-1 cursor-pointer">
-                    ❄️ 金沢（冬・雪景）
-                </button>
+                <span class="text-base text-slate-100 font-bold mr-1"><i class="fa-solid fa-book-open text-amber-300 mr-1"></i>見本の旅：</span>
+                <button type="button" onclick="loadPreset('kyoto')" class="preset-btn">🌸 京都（春）</button>
+                <button type="button" onclick="loadPreset('fukuoka')" class="preset-btn">🍜 福岡（秋）</button>
+                <button type="button" onclick="loadPreset('hokkaido')" class="preset-btn">🌿 北海道（夏）</button>
+                <button type="button" onclick="loadPreset('hakone')" class="preset-btn">🍁 箱根（秋）</button>
+                <button type="button" onclick="loadPreset('kanazawa')" class="preset-btn">❄️ 金沢（冬）</button>
             </div>
         </div>
     </header>
@@ -175,16 +185,20 @@
     <main class="max-w-6xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <!-- 左側：設定・入力フォーム -->
-        <section class="no-print lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-            <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-amber-600"></i>
-                    旅の条件を入力
+        <section class="no-print lg:col-span-5 bg-white p-5 rounded-2xl shadow-sm border-2 border-slate-200 space-y-6">
+            <div class="border-b-2 border-slate-100 pb-3 flex justify-between items-center gap-2">
+                <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-700"></i>
+                    旅の中身を書く
                 </h2>
-                <span class="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full font-medium">1泊2日プラン</span>
+                <span class="text-base bg-amber-100 text-amber-900 px-3 py-1 rounded-full font-bold">1泊2日</span>
             </div>
+            <p id="voiceHelp" class="f-help bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3" hidden>
+                <i class="fa-solid fa-microphone text-emerald-700 mr-1"></i>
+                <b>マイクのボタン</b>を押して話すと、文字になります。話し終わると自動で止まります。
+            </p>
 
-            <form id="itineraryForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
+            <form id="itineraryForm" class="space-y-5" onsubmit="handleFormSubmit(event)">
                 <!-- いっしょに作る人 -->
                 <div class="bg-sky-50 p-4 rounded-xl border-2 border-sky-200 space-y-3">
                     <h3 class="f-section"><i class="fa-solid fa-user-group text-sky-800 mr-2"></i>いっしょに作る人</h3>
@@ -195,73 +209,62 @@
                     </button>
                 </div>
 
-                <!-- 出発地 & 目的地 -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">出発地 <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <i class="fa-solid fa-plane-departure absolute left-3 top-3 text-slate-400"></i>
-                            <input type="text" id="origin" required placeholder="例: 東京, 新大阪" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
+                <!-- 旅の基本 -->
+                <div class="day-form space-y-4">
+                    <h3 class="f-section"><i class="fa-solid fa-map-location-dot text-amber-700 mr-2"></i>どこへ、いつ行く？</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="origin" class="f-label">出発するところ</label>
+                            <input type="text" id="origin" data-voice placeholder="例：東京駅" class="f-input">
+                        </div>
+                        <div>
+                            <label for="destination" class="f-label">行き先</label>
+                            <input type="text" id="destination" data-voice placeholder="例：京都、箱根" class="f-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="startDate" class="f-label">行く日</label>
+                            <input type="date" id="startDate" onchange="autoFillEndDate()" class="f-input">
+                        </div>
+                        <div>
+                            <label for="endDate" class="f-label">帰る日</label>
+                            <input type="date" id="endDate" class="f-input">
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="season" class="f-label">季節</label>
+                            <select id="season" class="f-input">
+                                <option value="spring">🌸 春（桜・新緑）</option>
+                                <option value="summer">🌿 夏（川・海）</option>
+                                <option value="autumn">🍁 秋（紅葉・味覚）</option>
+                                <option value="winter">❄️ 冬（雪景色・温泉）</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="travelStyle" class="f-label">だれと行く旅？</label>
+                            <select id="travelStyle" class="f-input">
+                                <option value="夫婦・カップル旅">夫婦・カップル旅</option>
+                                <option value="のんびり一人旅">のんびり一人旅</option>
+                                <option value="女子旅・友人旅">女子旅・友人旅</option>
+                                <option value="ファミリー旅行">家族旅行</option>
+                            </select>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">目的地 <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <i class="fa-solid fa-location-dot absolute left-3 top-3 text-slate-400"></i>
-                            <input type="text" id="destination" required placeholder="例: 福岡, 京都, 箱根" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 往復日付入力 -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">往路日（出発）</label>
-                        <input type="date" id="startDate" onchange="autoFillEndDate()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">復路日（帰路）</label>
-                        <input type="date" id="endDate" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
-                    </div>
-                </div>
-
-                <!-- 季節とスタイル -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">季節感 <span class="text-red-500">*</span></label>
-                        <select id="season" onchange="generateBrochure()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
-                            <option value="spring">🌸 春 (桜・新緑)</option>
-                            <option value="summer">🌿 夏 (清流・海)</option>
-                            <option value="autumn">🍁 秋 (紅葉・味覚)</option>
-                            <option value="winter">❄️ 冬 (雪景色・温泉)</option>
+                        <label for="transportation" class="f-label">おもな乗り物</label>
+                        <select id="transportation" class="f-input">
+                            <option value="新幹線・特急電車">新幹線・特急電車</option>
+                            <option value="ドライブ・レンタカー">車（ドライブ）</option>
+                            <option value="飛行機＋現地バス">飛行機とバス</option>
+                            <option value="ローカル線・徒歩散策">ふつうの電車と歩き</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">旅のスタイル</label>
-                        <select id="travelStyle" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
-                            <option value="夫婦・カップル旅">夫婦・カップル旅</option>
-                            <option value="のんびり一人旅">のんびり一人旅</option>
-                            <option value="女子旅・友人旅">女子旅・友人旅</option>
-                            <option value="ファミリー旅行">ファミリー旅行</option>
-                        </select>
+                        <label for="tagline" class="f-label">旅のテーマ（ひとことで）</label>
+                        <input type="text" id="tagline" data-voice placeholder="例：紅葉と温泉で、心も体もぽかぽかに" class="f-input">
                     </div>
-                </div>
-
-                <!-- 移動手段 -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">主な移動手段</label>
-                    <select id="transportation" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white transition">
-                        <option value="新幹線・特急電車">新幹線・特急電車</option>
-                        <option value="ドライブ・レンタカー">ドライブ・レンタカー</option>
-                        <option value="飛行機＋現地バス">飛行機＋現地バス</option>
-                        <option value="ローカル線・徒歩散策">ローカル線・徒歩散策</option>
-                    </select>
-                </div>
-
-                <!-- キャッチコピー -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">旅のテーマ / キャッチコピー</label>
-                    <input type="text" id="tagline" placeholder="例: 季節の絶景と美食に癒やされる大人旅" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
                 </div>
 
                 <!-- 1日目・2日目の予定（JSで作る：予定／だれの提案？／ひとこと） -->
@@ -280,25 +283,25 @@
                     <textarea id="memo" rows="2" data-voice placeholder="例：歩きやすい靴、羽織るもの" class="f-input"></textarea>
                 </div>
 
-                <button type="submit" id="btnGenerate" class="w-full bg-slate-800 hover:bg-slate-900 text-amber-400 font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                <button type="submit" id="btnGenerate" class="w-full min-h-[56px] bg-slate-800 hover:bg-slate-900 text-white text-xl font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-400">
                     <i class="fa-solid fa-book-open"></i>
-                    パンフレットを生成・更新する
+                    パンフレットに反映する
                 </button>
             </form>
         </section>
 
         <!-- 右側：旅のしおり（パンフレットプレビュー） -->
-        <section class="lg:col-span-7 space-y-4">
+        <section class="lg:col-span-7 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pb-4">
             
             <!-- アクションバー -->
-            <div class="no-print flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <span class="text-xs text-slate-500 flex items-center gap-1">
+            <div class="no-print flex flex-wrap justify-between items-center gap-3 bg-white p-4 rounded-xl shadow-sm border-2 border-slate-200">
+                <span class="text-base text-slate-700 flex items-center gap-2">
                     <i class="fa-solid fa-circle-info text-amber-600"></i>
-                    生成されたパンフレットを確認・印刷できます
+                    書いた内容がすぐにここへ表示されます
                 </span>
-                <button type="button" onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow flex items-center gap-1.5 cursor-pointer">
+                <button type="button" onclick="window.print()" class="min-h-[50px] bg-amber-700 hover:bg-amber-800 text-white text-lg font-bold px-5 py-2 rounded-xl transition shadow flex items-center gap-2 cursor-pointer focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-400">
                     <i class="fa-solid fa-print"></i>
-                    しおりを印刷 / PDF保存
+                    印刷する（PDFにも保存できます）
                 </button>
             </div>
 
@@ -311,24 +314,24 @@
                     
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8 text-white">
                         <div class="flex flex-wrap items-center gap-2 mb-2">
-                            <span id="headerSeasonBadge" class="th-badge font-bold px-3 py-0.5 rounded-full text-xs shadow-sm">
+                            <span id="headerSeasonBadge" class="th-badge font-bold px-3 py-1 rounded-full b-small shadow-sm">
                                 🍁 秋の旅
                             </span>
-                            <span id="outStyle" class="bg-white/20 backdrop-blur-md px-3 py-0.5 rounded-full text-xs font-semibold">
+                            <span id="outStyle" class="bg-black/40 px-3 py-1 rounded-full b-small font-bold">
                                 夫婦・カップル旅
                             </span>
                         </div>
                         <h1 id="outDestination" class="text-3xl sm:text-4xl font-extrabold tracking-wide drop-shadow-md">
                             箱根・芦ノ湖
                         </h1>
-                        <p id="outTagline" class="text-xs sm:text-sm font-medium text-slate-200 mt-1 line-clamp-1 drop-shadow">
+                        <p id="outTagline" class="b-tagline font-bold text-white mt-1 drop-shadow">
                             静寂の森と温泉、紅葉に染まる山々を巡る癒しのひととき
                         </p>
                     </div>
                 </div>
 
                 <!-- 旅の概要バー -->
-                <div class="th-bar text-white py-3 px-6 text-xs flex flex-wrap justify-between items-center gap-2">
+                <div class="th-bar text-white py-3 px-6 b-small font-bold flex flex-wrap justify-between items-center gap-2">
                     <div class="flex items-center gap-1.5">
                         <i class="fa-solid fa-route th-icon"></i>
                         <span id="outRoute">東京 発 → 箱根</span>
@@ -348,11 +351,11 @@
                     
                     <!-- DAY 1 -->
                     <div class="relative pl-6 border-l-4 th-line1 space-y-4">
-                        <div class="absolute -left-[18px] top-0 th-dot1 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md">
+                        <div class="absolute -left-[22px] top-0 th-dot1 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-md">
                             1日
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <h3 class="b-day-title font-bold text-slate-900 flex items-center gap-2">
                                 1日目：出発して、見て、味わって、お宿へ
                             </h3>
                             <p class="b-small text-slate-600">はじめての景色と、ゆっくり休む夜</p>
@@ -367,13 +370,13 @@
                             <div class="md:col-span-5 flex flex-col gap-3">
                                 <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d1Img1" src="https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=600&q=80" alt="Spot Photo" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'sightseeing')">
-                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
                                         <i class="fa-solid fa-camera mr-1"></i>観光スポット
                                     </span>
                                 </div>
                                 <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d1Img2" src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80" alt="Gourmet / Hotel" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'onsen')">
-                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
                                         <i class="fa-solid fa-utensils mr-1"></i>グルメ・お宿
                                     </span>
                                 </div>
@@ -383,11 +386,11 @@
 
                     <!-- DAY 2 -->
                     <div class="relative pl-6 border-l-4 th-line2 space-y-4">
-                        <div class="absolute -left-[18px] top-0 th-dot2 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md">
+                        <div class="absolute -left-[22px] top-0 th-dot2 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-md">
                             2日
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <h3 class="b-day-title font-bold text-slate-900 flex items-center gap-2">
                                 2日目：朝の散歩とお土産、そして帰り道
                             </h3>
                             <p class="b-small text-slate-600">季節の風景を胸に、のんびり帰りましょう</p>
@@ -402,13 +405,13 @@
                             <div class="md:col-span-5 flex flex-col gap-3">
                                 <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d2Img1" src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80" alt="Spot Photo 2" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'japan')">
-                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
                                         <i class="fa-solid fa-map-location-dot mr-1"></i>立ち寄り名所
                                     </span>
                                 </div>
                                 <div class="relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d2Img2" src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80" alt="Gourmet Photo 2" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'food')">
-                                    <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
                                         <i class="fa-solid fa-bag-shopping mr-1"></i>名物・お土産
                                     </span>
                                 </div>
@@ -741,7 +744,7 @@
                     const card = el('div', 'slot-form space-y-2');
                     card.innerHTML = `
                         <label for="${s.key}" class="slot-name">${s.label}</label>
-                        <input type="text" id="${s.key}" data-voice class="f-input" placeholder="${s.ph}">
+                        <textarea id="${s.key}" rows="2" data-voice class="f-input" placeholder="${s.ph}"></textarea>
                         <fieldset>
                             <legend class="f-label">だれの提案？</legend>
                             <div class="by-group">
@@ -750,7 +753,7 @@
                             </div>
                         </fieldset>
                         <label for="${s.key}_note" class="f-label">ひとこと（思い出・おすすめの理由など）</label>
-                        <input type="text" id="${s.key}_note" data-voice class="f-input" placeholder="例：むかし家族で行って、とてもよかった">`;
+                        <textarea id="${s.key}_note" rows="2" data-voice class="f-input" placeholder="例：むかし家族で行って、とてもよかった"></textarea>`;
                     wrap.appendChild(card);
                 });
                 box.appendChild(wrap);
@@ -758,6 +761,7 @@
         }
 
         function renderCreators() {
+            stopVoice(); // 作り直す入力欄に声が入り続けないように
             const list = document.getElementById('creatorList');
             list.replaceChildren();
             creators.forEach((c, i) => {
@@ -779,6 +783,7 @@
             document.getElementById('btnAddCreator').disabled = creators.length >= MAX_CREATORS;
             renderMessages();
             refreshNameLabels();
+            attachVoice(document);
         }
 
         function renderMessages() {
@@ -962,6 +967,14 @@
             setTextContent('outCreators', names.length ? names.join('・') : '（名前を入れてください）');
         }
 
+        // 書いた文章が全部見えるように、入力欄の高さを中身に合わせる
+        function fitTextareas() {
+            document.querySelectorAll('textarea.f-input').forEach(t => {
+                t.style.height = 'auto';
+                t.style.height = (t.scrollHeight + 4) + 'px';
+            });
+        }
+
         // パンフレットのUI更新
         function generateBrochure() {
             try {
@@ -990,6 +1003,7 @@
 
                 renderBrochureSlots();
                 renderBrochureVoices();
+                fitTextareas();
 
                 setTextContent('outMemo', memo);
                 document.getElementById('outMemoBox').style.display = memo ? '' : 'none';
@@ -1011,11 +1025,83 @@
             }
         }
 
+        // ===== 音声入力（Web Speech API。使えないブラウザではボタンを出さない） =====
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let activeVoice = null; // { rec, field, btn }
+
+        function attachVoice(root) {
+            if (!SpeechRec) return;
+            (root || document).querySelectorAll('[data-voice]').forEach(field => {
+                if (field.dataset.voiceReady) return;
+                field.dataset.voiceReady = '1';
+                const wrap = el('div', 'voice-wrap');
+                field.parentNode.insertBefore(wrap, field);
+                wrap.appendChild(field);
+                const btn = el('button', 'btn-icon btn-mic');
+                btn.type = 'button';
+                btn.title = '声で入力する';
+                btn.setAttribute('aria-label', '声で入力する');
+                btn.setAttribute('aria-pressed', 'false');
+                btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                btn.addEventListener('click', () => toggleVoice(field, btn));
+                wrap.appendChild(btn);
+            });
+        }
+
+        function stopVoice() {
+            if (activeVoice) activeVoice.rec.stop();
+        }
+
+        function toggleVoice(field, btn) {
+            if (activeVoice) {
+                const same = activeVoice.field === field;
+                stopVoice();
+                if (same) return;
+            }
+            const rec = new SpeechRec();
+            rec.lang = 'ja-JP';
+            rec.interimResults = true;
+            rec.continuous = false;
+            const base = field.value;
+            rec.onresult = e => {
+                let text = '';
+                for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+                field.value = base + text;
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+            rec.onerror = e => {
+                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                    alert('マイクが使えません。ブラウザの設定で、マイクを「許可」にしてください。');
+                } else if (e.error === 'no-speech') {
+                    // 何も聞こえなかったときは静かに止める
+                } else if (e.error === 'network') {
+                    alert('声の入力には、インターネットへの接続が必要です。');
+                }
+            };
+            rec.onend = () => {
+                btn.classList.remove('listening');
+                btn.setAttribute('aria-pressed', 'false');
+                btn.title = '声で入力する';
+                if (activeVoice && activeVoice.rec === rec) activeVoice = null;
+            };
+            activeVoice = { rec, field, btn };
+            btn.classList.add('listening');
+            btn.setAttribute('aria-pressed', 'true');
+            btn.title = '聞いています（もう一度押すと止まります）';
+            try {
+                rec.start();
+            } catch (err) {
+                rec.onend();
+            }
+        }
+
         // 初期表示：フォームを組み立てて、箱根のサンプルを読み込む
         window.onload = function() {
             renderSlotForms();
             renderCreators();
             setupFormEvents();
+            attachVoice(document);
+            if (SpeechRec) document.getElementById('voiceHelp').hidden = false;
             loadPreset('hakone');
         };
     </script>
