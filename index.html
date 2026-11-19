@@ -124,6 +124,15 @@
         .btn-mic { color: #047857; border-color: #10b981; }
         .btn-mic:hover { background: #ecfdf5; }
         .btn-mic.listening { color: #fff; background: #dc2626; border-color: #dc2626; animation: micPulse 1.2s ease-in-out infinite; }
+        /* 写真を変えるボタン */
+        .photo-btn {
+            position: absolute; top: 8px; right: 8px; z-index: 5; display: inline-flex; align-items: center; gap: 6px;
+            min-height: 44px; padding: 6px 12px; font-size: 16px; font-weight: 700; color: #1e293b;
+            background: rgba(255,255,255,.92); border: 2px solid #1e293b; border-radius: 999px; cursor: pointer;
+        }
+        .photo-btn:hover { background: #fff; }
+        .photo-btn:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+        html.print-mode .photo-btn, html.print-mode .creators-empty { display: none !important; }
         @keyframes micPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,.5); } 50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); } }
 
         /* ===== 印刷（A4一枚） =====
@@ -1014,7 +1023,7 @@
                     if (by) {
                         const b = el('span', `b-by by-${by}`);
                         b.append(el('i', 'fa-solid fa-lightbulb mr-1'),
-                            by === 'both' ? `${bothLabel()}考えました` : `${byLabel(by)}の提案`);
+                            by === 'both' ? `${bothLabel()}考えた` : `${byLabel(by)}の提案`);
                         top.appendChild(b);
                     }
                     card.appendChild(top);
@@ -1047,6 +1056,7 @@
 
             const names = creators.map(c => c.name.trim()).filter(Boolean);
             setTextContent('outCreators', names.length ? names.join('・') : '（名前を入れてください）');
+            document.getElementById('outCreators').parentNode.classList.toggle('creators-empty', !names.length);
         }
 
         // ゆったり度の札（選んだものだけ表示）
@@ -1384,6 +1394,60 @@
             saveNow();
         }
 
+        // ===== 自分の写真に差し替える（端末の中だけで処理。どこにも送らない） =====
+        const PHOTO_MAX = { mainHeroImg: 1400 }; // 長い辺の最大px（それ以外は 900）
+        let photoTarget = null;
+
+        function setupPhotoButtons() {
+            const input = el('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.className = 'hidden';
+            input.id = 'photoFile';
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0];
+                input.value = '';
+                if (file && photoTarget) replacePhoto(photoTarget, file);
+            });
+            document.body.appendChild(input);
+
+            IMAGE_IDS.forEach(id => {
+                const img = document.getElementById(id);
+                const btn = el('button', 'no-print photo-btn');
+                btn.type = 'button';
+                btn.innerHTML = '<i class="fa-solid fa-camera"></i> <span>写真を変える</span>';
+                btn.setAttribute('aria-label', id === 'mainHeroImg' ? '表紙の写真を変える' : '写真を変える');
+                btn.addEventListener('click', () => { photoTarget = id; input.click(); });
+                img.parentNode.appendChild(btn);
+            });
+        }
+
+        function replacePhoto(id, file) {
+            if (!/^image\//.test(file.type)) {
+                alert('写真（画像）のファイルを選んでください。');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                const src = new Image();
+                src.onload = () => {
+                    // 大きな写真はそのままだと保存できないので、縮小してから使う
+                    const max = PHOTO_MAX[id] || 900;
+                    const r = Math.min(1, max / Math.max(src.width, src.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(src.width * r);
+                    canvas.height = Math.round(src.height * r);
+                    canvas.getContext('2d').drawImage(src, 0, 0, canvas.width, canvas.height);
+                    document.getElementById(id).src = canvas.toDataURL('image/jpeg', 0.82);
+                    generateBrochure();
+                };
+                src.onerror = () => alert('この写真は開けませんでした。別の写真を選んでください。');
+                src.src = reader.result;
+            };
+            reader.onerror = () => alert('写真を読み込めませんでした。');
+            reader.readAsDataURL(file);
+        }
+
         // 見本の旅ボタン：今の内容が置きかわるので確認する
         function usePreset(key) {
             if (!confirm('見本の旅を読み込むと、いま書いている予定が置きかわります。\n（作る人の名前とひとことは残ります）\nよろしいですか？')) return;
@@ -1397,6 +1461,7 @@
             setupFormEvents();
             attachVoice(document);
             if (SpeechRec) document.getElementById('voiceHelp').hidden = false;
+            setupPhotoButtons();
             if (!loadSaved()) loadPreset('hakone');
         };
     </script>
