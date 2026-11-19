@@ -45,6 +45,65 @@
         .th-memo { background: var(--soft); border-color: var(--main); }
         .th-memo-title { color: var(--ink); }
 
+        /* ===== 入力フォーム（大きく・はっきり） ===== */
+        .f-section { font-size: 20px; font-weight: 700; color: #0f172a; display: flex; align-items: center; }
+        .f-help { font-size: 16px; color: #334155; line-height: 1.6; }
+        .f-label { display: block; font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+        .f-input {
+            width: 100%; min-height: 50px; padding: 10px 14px; font-size: 18px; line-height: 1.5;
+            color: #0f172a; background: #fff; border: 2px solid #94a3b8; border-radius: 10px;
+        }
+        .f-input::placeholder { color: #64748b; }
+        .f-input:focus { outline: 3px solid #f59e0b; outline-offset: 1px; border-color: #b45309; }
+        textarea.f-input { min-height: 80px; }
+        .btn-sub {
+            display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 18px;
+            font-size: 17px; font-weight: 700; color: #0c4a6e; background: #fff;
+            border: 2px solid #0369a1; border-radius: 999px; cursor: pointer;
+        }
+        .btn-sub:hover { background: #e0f2fe; }
+        .btn-sub:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-sub:focus-visible, .btn-icon:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+        .btn-icon {
+            display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+            width: 50px; height: 50px; font-size: 20px; border: 2px solid #94a3b8; border-radius: 10px;
+            background: #fff; color: #334155; cursor: pointer;
+        }
+        .btn-icon:hover { background: #f1f5f9; }
+
+        /* 「だれの提案？」の選択ボタン */
+        .by-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .by-opt { position: relative; }
+        .by-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+        .by-opt > span {
+            display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 8px 16px;
+            font-size: 17px; font-weight: 700; color: #1e293b; background: #fff;
+            border: 2px solid #94a3b8; border-radius: 999px; cursor: pointer; user-select: none;
+        }
+        .by-opt > span:hover { background: #f1f5f9; }
+        .by-opt input:checked + span { background: #1e293b; color: #fff; border-color: #1e293b; }
+        .by-opt input:focus-visible + span { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+        .slot-form { background: #fff; border: 2px solid #cbd5e1; border-radius: 12px; padding: 14px; }
+        .slot-form .slot-name { font-size: 18px; font-weight: 700; color: #0f172a; }
+        .day-form { padding: 14px; border-radius: 14px; background: #f8fafc; border: 2px solid #e2e8f0; }
+
+        /* ===== パンフレット本文 ===== */
+        .b-head { font-size: 18px; font-weight: 700; }
+        .b-text { font-size: 16px; line-height: 1.6; }
+        .b-small { font-size: 16px; line-height: 1.5; }
+        .b-slot { background: rgba(255,255,255,.85); border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; }
+        .b-slot-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .b-chip { font-size: 15px; font-weight: 700; padding: 2px 10px; border-radius: 6px; }
+        .b-by { font-size: 15px; font-weight: 700; padding: 1px 10px; border-radius: 999px; border: 1.5px solid currentColor; }
+        .b-by.by-elder { color: #9a3412; background: #fff7ed; }
+        .b-by.by-young { color: #075985; background: #f0f9ff; }
+        .b-by.by-both  { color: #6b21a8; background: #faf5ff; }
+        .b-plan { font-size: 16px; font-weight: 700; color: #1e293b; line-height: 1.55; margin-top: 4px; }
+        .b-note { font-size: 16px; color: #334155; line-height: 1.55; margin-top: 4px; padding-left: 10px; border-left: 3px solid #cbd5e1; }
+        .b-msg { font-size: 16px; line-height: 1.6; color: #1e293b; }
+        .b-msg-name { font-weight: 700; }
+
         /* 印刷スタイル */
         @media print {
             .no-print {
@@ -126,6 +185,16 @@
             </div>
 
             <form id="itineraryForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
+                <!-- いっしょに作る人 -->
+                <div class="bg-sky-50 p-4 rounded-xl border-2 border-sky-200 space-y-3">
+                    <h3 class="f-section"><i class="fa-solid fa-user-group text-sky-800 mr-2"></i>いっしょに作る人</h3>
+                    <p class="f-help">名前か呼び名を入れてください。パンフレットに「作った人」としてのります。</p>
+                    <div id="creatorList" class="space-y-3"></div>
+                    <button type="button" id="btnAddCreator" onclick="addCreator()" class="btn-sub">
+                        <i class="fa-solid fa-user-plus"></i> 作る人を増やす
+                    </button>
+                </div>
+
                 <!-- 出発地 & 目的地 -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -195,32 +264,20 @@
                     <input type="text" id="tagline" placeholder="例: 季節の絶景と美食に癒やされる大人旅" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none transition">
                 </div>
 
-                <!-- Day 1 入力 -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                    <h3 class="text-xs font-bold text-slate-800 flex items-center justify-between">
-                        <span><i class="fa-solid fa-sun text-amber-500 mr-1"></i>1日目の主な予定</span>
-                    </h3>
-                    <input type="text" id="d1_morning" placeholder="午前: 出発〜到着・最初の観光" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                    <input type="text" id="d1_lunch" placeholder="昼食: 名物ランチ" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                    <input type="text" id="d1_afternoon" placeholder="午後: 主な観光・体験" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                    <input type="text" id="d1_hotel" placeholder="夕方/夜: チェックイン・夕食・温泉" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
+                <!-- 1日目・2日目の予定（JSで作る：予定／だれの提案？／ひとこと） -->
+                <div id="slotForms" class="space-y-5"></div>
+
+                <!-- ふたりからのひとこと（作る人ごとに入力欄を作る） -->
+                <div class="bg-rose-50 p-4 rounded-xl border-2 border-rose-200 space-y-3">
+                    <h3 class="f-section"><i class="fa-solid fa-comments text-rose-700 mr-2"></i><span id="messagesHeading">ふたりからのひとこと</span></h3>
+                    <p class="f-help">この旅への思いや、相手に伝えたいことを、それぞれ書きましょう。</p>
+                    <div id="messageList" class="space-y-3"></div>
                 </div>
 
-                <!-- Day 2 入力 -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                    <h3 class="text-xs font-bold text-slate-800 flex items-center justify-between">
-                        <span><i class="fa-solid fa-moon text-indigo-400 mr-1"></i>2日目の主な予定</span>
-                    </h3>
-                    <input type="text" id="d2_morning" placeholder="午前: 朝食〜朝市や名所見学" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                    <input type="text" id="d2_lunch" placeholder="昼食: グルメランチ・カフェ" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                    <input type="text" id="d2_afternoon" placeholder="午後: お土産・散策" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                    <input type="text" id="d2_return" placeholder="夕方: 帰路" class="w-full px-3 py-1.5 border border-slate-300 rounded text-xs">
-                </div>
-
-                <!-- メモ -->
+                <!-- 持ち物・気をつけること -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">旅のメモ・持ち物など</label>
-                    <textarea id="memo" rows="2" placeholder="持ち物や予約確認など" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 outline-none transition"></textarea>
+                    <label for="memo" class="f-label">持ち物・気をつけること</label>
+                    <textarea id="memo" rows="2" data-voice placeholder="例：歩きやすい靴、羽織るもの" class="f-input"></textarea>
                 </div>
 
                 <button type="submit" id="btnGenerate" class="w-full bg-slate-800 hover:bg-slate-900 text-amber-400 font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
@@ -296,32 +353,15 @@
                         </div>
                         <div>
                             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                                DAY 1 : 到着とメイン観光 & 温泉宿での静やかな夜
+                                1日目：出発して、見て、味わって、お宿へ
                             </h3>
-                            <p class="text-xs text-slate-500">初日は景勝地を巡り、お宿でゆっくりお寛ぎください</p>
+                            <p class="b-small text-slate-600">はじめての景色と、ゆっくり休む夜</p>
                         </div>
 
                         <!-- タイムライン ＋ 画像グリッド -->
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 pt-1">
                             <!-- スケジュール詳細 -->
-                            <div class="md:col-span-7 space-y-2.5">
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip1 px-2 py-0.5 rounded">午前</span>
-                                    <p id="outD1Morning" class="text-xs font-semibold text-slate-700 mt-1">ロマンスカーで箱根湯本へ。箱根登山電車で強羅へ</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip1 px-2 py-0.5 rounded">昼食 (ご当地グルメ)</span>
-                                    <p id="outD1Lunch" class="text-xs font-semibold text-slate-700 mt-1">強羅にて名物「豆腐かつ煮」を堪能</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip1 px-2 py-0.5 rounded">午後 (観光)</span>
-                                    <p id="outD1Afternoon" class="text-xs font-semibold text-slate-700 mt-1">箱根ロープウェイで大涌谷へ。名物「黒たまご」と絶景を楽しむ</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip1 px-2 py-0.5 rounded">夕方・宿泊</span>
-                                    <p id="outD1Hotel" class="text-xs font-semibold text-slate-700 mt-1">芦ノ湖畔の温泉旅館にチェックイン。温泉を満喫</p>
-                                </div>
-                            </div>
+                            <div id="outDay1Slots" class="md:col-span-7 space-y-2.5"></div>
                             
                             <!-- Day 1 フォトカード -->
                             <div class="md:col-span-5 flex flex-col gap-3">
@@ -348,32 +388,15 @@
                         </div>
                         <div>
                             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                                DAY 2 : 景勝地巡りとお買い物 & 満足の帰路
+                                2日目：朝の散歩とお土産、そして帰り道
                             </h3>
-                            <p class="text-xs text-slate-500">季節の風景を胸に焼き付け、お土産を探しながらのんびり帰路へ</p>
+                            <p class="b-small text-slate-600">季節の風景を胸に、のんびり帰りましょう</p>
                         </div>
 
                         <!-- タイムライン ＋ 画像グリッド -->
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 pt-1">
                             <!-- スケジュール詳細 -->
-                            <div class="md:col-span-7 space-y-2.5">
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip2 px-2 py-0.5 rounded">午前</span>
-                                    <p id="outD2Morning" class="text-xs font-semibold text-slate-700 mt-1">朝の芦ノ湖海賊船に乗船。箱根神社を参拝</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip2 px-2 py-0.5 rounded">昼食 (グルメ)</span>
-                                    <p id="outD2Lunch" class="text-xs font-semibold text-slate-700 mt-1">湖畔のベーカリーカフェで芦ノ湖を眺めながらランチ</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip2 px-2 py-0.5 rounded">午後 (買い物・散策)</span>
-                                    <p id="outD2Afternoon" class="text-xs font-semibold text-slate-700 mt-1">箱根湯本駅前商店街でお土産探し（温泉まんじゅう等）</p>
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <span class="text-[11px] font-bold th-chip2 px-2 py-0.5 rounded">夕方・帰路</span>
-                                    <p id="outD2Return" class="text-xs font-semibold text-slate-700 mt-1">夕方の特急でゆったりと帰路へ</p>
-                                </div>
-                            </div>
+                            <div id="outDay2Slots" class="md:col-span-7 space-y-2.5"></div>
 
                             <!-- Day 2 フォトカード -->
                             <div class="md:col-span-5 flex flex-col gap-3">
@@ -393,24 +416,29 @@
                         </div>
                     </div>
 
-                    <!-- メモ・ワンポイントアドバイス欄 -->
-                    <div class="th-memo rounded-xl p-4 border">
-                        <h4 class="text-xs font-bold th-memo-title flex items-center gap-1.5 mb-1.5">
-                            <i class="fa-solid fa-lightbulb text-amber-600"></i> 旅のメモ・ワンポイントアドバイス
+                    <!-- ふたりからのひとこと -->
+                    <div id="outMessagesBox" class="th-memo rounded-xl p-4 border-2">
+                        <h4 id="outMessagesTitle" class="b-head th-memo-title flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-comments"></i> ふたりからのひとこと
                         </h4>
-                        <p id="outMemo" class="text-xs text-slate-700 leading-relaxed">
-                            山間部は朝夕冷え込むため羽織るものを持参すること。フリーパスを活用するとお得です。
-                        </p>
+                        <div id="outMessages" class="space-y-2"></div>
+                    </div>
+
+                    <!-- 持ち物・気をつけること -->
+                    <div id="outMemoBox" class="flex items-start gap-2 b-text text-slate-700">
+                        <i class="fa-solid fa-suitcase-rolling mt-1 text-slate-500"></i>
+                        <p><span class="font-bold">持ち物・気をつけること：</span><span id="outMemo"></span></p>
                     </div>
 
                     <!-- パンフレットフッター -->
-                    <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-2">
+                    <div class="border-t border-slate-300 pt-3 flex flex-col sm:flex-row justify-between items-center b-small text-slate-600 gap-2">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-heart text-pink-400"></i>
-                            <span>素敵な旅の思い出になりますように</span>
+                            <i class="fa-solid fa-pen-nib th-memo-title"></i>
+                            <span class="font-bold">作った人：</span><span id="outCreators"></span>
                         </div>
-                        <div>
-                            <span>一泊2日 旅のプラン作成ツール</span>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-heart text-pink-500"></i>
+                            <span>すてきな旅の思い出になりますように</span>
                         </div>
                     </div>
 
@@ -513,6 +541,18 @@
                 d2_afternoon: '箱根湯本駅前商店街でお土産探し（温泉まんじゅう・寄木細工）',
                 d2_return: '夕方の特急でゆったりと帰路へ。楽しかった旅の余韻に浸る',
                 memo: '山間部は朝夕冷え込むため羽織るものを持参すること。箱根フリーパスを活用すると移動がスムーズです。',
+                by: {
+                    d1_morning: 'young', d1_lunch: 'elder', d1_afternoon: 'both', d1_hotel: 'elder',
+                    d2_morning: 'young', d2_lunch: 'young', d2_afternoon: 'elder', d2_return: 'both'
+                },
+                notes: {
+                    d1_morning: '展望席を予約すると、前の景色がよく見えて楽しいです',
+                    d1_lunch: 'むかし家族で食べた、やさしい味。胃にも軽いです',
+                    d1_afternoon: '黒たまごは、ひとつ食べると7年長生きすると言われています',
+                    d1_hotel: 'お部屋にお風呂がある宿なら、ゆっくり休めます',
+                    d2_morning: '海賊船の上で、みんなで記念写真をとりましょう',
+                    d2_afternoon: '寄木細工の小物入れは、手ごろでお土産にぴったり'
+                },
                 heroImg: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80',
                 d1Img1: 'https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=600&q=80',
                 d1Img2: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
@@ -628,6 +668,201 @@
             'ローカル線・徒歩散策': 'fa-person-walking'
         };
 
+        // ===== 予定の枠（1日目・2日目 × 4つ） =====
+        const SLOTS = [
+            { key: 'd1_morning',   day: 1, label: '午前',         ph: '例：出発して、最初の名所へ' },
+            { key: 'd1_lunch',     day: 1, label: 'お昼ごはん',   ph: '例：その土地の名物料理' },
+            { key: 'd1_afternoon', day: 1, label: '午後',         ph: '例：見どころを見学する' },
+            { key: 'd1_hotel',     day: 1, label: '夕方・お宿',   ph: '例：お宿に着いて、夕食と温泉' },
+            { key: 'd2_morning',   day: 2, label: '午前',         ph: '例：朝ごはんのあと、朝市へ' },
+            { key: 'd2_lunch',     day: 2, label: 'お昼ごはん',   ph: '例：景色のよいお店で' },
+            { key: 'd2_afternoon', day: 2, label: '午後',         ph: '例：お土産さがし、散歩' },
+            { key: 'd2_return',    day: 2, label: '夕方・帰り道', ph: '例：帰りの電車に乗る' }
+        ];
+
+        // 世代の呼び方（文言を変えるときはここだけ直す）
+        const GEN_LABEL = { elder: '年長の方', young: '若い方' };
+        const MAX_CREATORS = 6;
+
+        // いっしょに作る人（名前・世代・ひとこと）
+        let creators = [
+            { name: '', gen: 'elder', msg: '' },
+            { name: '', gen: 'young', msg: '' }
+        ];
+
+        // 小さなDOM作成ヘルパー（文字は必ず textContent で入れる）
+        function el(tag, cls, text) {
+            const e = document.createElement(tag);
+            if (cls) e.className = cls;
+            if (text != null) e.textContent = text;
+            return e;
+        }
+
+        function getRadio(name) {
+            const r = document.querySelector(`input[name="${name}"]:checked`);
+            return r ? r.value : '';
+        }
+
+        function setRadio(name, value) {
+            document.querySelectorAll(`input[name="${name}"]`).forEach(r => { r.checked = (r.value === value); });
+        }
+
+        function namesOf(gen) {
+            return creators.filter(c => c.gen === gen && c.name.trim()).map(c => c.name.trim());
+        }
+
+        function bothLabel() {
+            return creators.length <= 2 ? 'ふたりで' : 'みんなで';
+        }
+
+        // 「だれの提案？」の表示名。フォーム用は「年長の方（はなこ）」、パンフレット用は「はなこ」
+        function byLabel(by, forForm) {
+            if (by === 'both') return bothLabel();
+            const names = namesOf(by);
+            if (forForm) return names.length ? `${GEN_LABEL[by]}（${names.join('・')}）` : GEN_LABEL[by];
+            return names.length ? names.join('・') : GEN_LABEL[by];
+        }
+
+        function displayName(i) {
+            const c = creators[i];
+            return (c && c.name.trim()) ? c.name.trim() : `${i + 1}人目の方`;
+        }
+
+        // ===== 入力フォームの組み立て =====
+        function renderSlotForms() {
+            const box = document.getElementById('slotForms');
+            box.replaceChildren();
+            [1, 2].forEach(day => {
+                const wrap = el('div', 'day-form space-y-3');
+                wrap.innerHTML = day === 1
+                    ? '<h3 class="f-section"><i class="fa-solid fa-sun text-amber-600 mr-2"></i>1日目の予定</h3>'
+                    : '<h3 class="f-section"><i class="fa-solid fa-moon text-indigo-600 mr-2"></i>2日目の予定</h3>';
+                SLOTS.filter(s => s.day === day).forEach(s => {
+                    const card = el('div', 'slot-form space-y-2');
+                    card.innerHTML = `
+                        <label for="${s.key}" class="slot-name">${s.label}</label>
+                        <input type="text" id="${s.key}" data-voice class="f-input" placeholder="${s.ph}">
+                        <fieldset>
+                            <legend class="f-label">だれの提案？</legend>
+                            <div class="by-group">
+                                ${['elder', 'young', 'both'].map(v => `
+                                <label class="by-opt"><input type="radio" name="${s.key}_by" value="${v}"><span><span class="by-text" data-by="${v}"></span></span></label>`).join('')}
+                            </div>
+                        </fieldset>
+                        <label for="${s.key}_note" class="f-label">ひとこと（思い出・おすすめの理由など）</label>
+                        <input type="text" id="${s.key}_note" data-voice class="f-input" placeholder="例：むかし家族で行って、とてもよかった">`;
+                    wrap.appendChild(card);
+                });
+                box.appendChild(wrap);
+            });
+        }
+
+        function renderCreators() {
+            const list = document.getElementById('creatorList');
+            list.replaceChildren();
+            creators.forEach((c, i) => {
+                const row = el('div', 'bg-white border-2 border-sky-200 rounded-xl p-3 space-y-2');
+                row.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <label for="cname_${i}" class="f-label" style="margin:0">${i + 1}人目の名前・呼び名</label>
+                        ${creators.length > 2 ? `<button type="button" class="btn-icon" data-remove="${i}" aria-label="${i + 1}人目を消す" title="この人を消す"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                    </div>
+                    <input type="text" id="cname_${i}" data-idx="${i}" data-voice class="f-input" placeholder="例：はなこ、たろう">
+                    <div class="by-group" role="radiogroup" aria-label="${i + 1}人目の世代">
+                        <label class="by-opt"><input type="radio" name="cgen_${i}" data-idx="${i}" value="elder"><span>${GEN_LABEL.elder}</span></label>
+                        <label class="by-opt"><input type="radio" name="cgen_${i}" data-idx="${i}" value="young"><span>${GEN_LABEL.young}</span></label>
+                    </div>`;
+                list.appendChild(row);
+                row.querySelector(`#cname_${i}`).value = c.name;
+                setRadio(`cgen_${i}`, c.gen);
+            });
+            document.getElementById('btnAddCreator').disabled = creators.length >= MAX_CREATORS;
+            renderMessages();
+            refreshNameLabels();
+        }
+
+        function renderMessages() {
+            const list = document.getElementById('messageList');
+            list.replaceChildren();
+            creators.forEach((c, i) => {
+                const row = el('div');
+                row.innerHTML = `
+                    <label for="msg_${i}" class="f-label msg-label" data-idx="${i}"></label>
+                    <textarea id="msg_${i}" data-idx="${i}" rows="2" data-voice class="f-input" placeholder="例：この旅でいっしょに見たい景色は…"></textarea>`;
+                list.appendChild(row);
+                row.querySelector('textarea').value = c.msg;
+            });
+        }
+
+        // 名前が変わったときに、提案ボタン・ひとこと欄の名前を書き換える
+        function refreshNameLabels() {
+            document.querySelectorAll('.by-text').forEach(s => { s.textContent = byLabel(s.dataset.by, true); });
+            document.querySelectorAll('.msg-label').forEach(l => { l.textContent = `${displayName(+l.dataset.idx)}からのひとこと`; });
+            setTextContent('messagesHeading', creators.length <= 2 ? 'ふたりからのひとこと' : 'みんなからのひとこと');
+        }
+
+        function addCreator() {
+            if (creators.length >= MAX_CREATORS) return;
+            creators.push({ name: '', gen: 'young', msg: '' });
+            renderCreators();
+            generateBrochure();
+            const last = document.getElementById(`cname_${creators.length - 1}`);
+            if (last) last.focus();
+        }
+
+        function removeCreator(i) {
+            if (creators.length <= 2) return;
+            if (!confirm(`「${displayName(i)}」を消しますか？\n（この人のひとことも消えます）`)) return;
+            creators.splice(i, 1);
+            renderCreators();
+            generateBrochure();
+        }
+
+        function setupFormEvents() {
+            const creatorList = document.getElementById('creatorList');
+            creatorList.addEventListener('input', e => {
+                if (e.target.id && e.target.id.startsWith('cname_')) {
+                    creators[+e.target.dataset.idx].name = e.target.value;
+                    refreshNameLabels();
+                }
+            });
+            creatorList.addEventListener('change', e => {
+                if (e.target.name && e.target.name.startsWith('cgen_')) {
+                    creators[+e.target.dataset.idx].gen = e.target.value;
+                    refreshNameLabels();
+                }
+            });
+            creatorList.addEventListener('click', e => {
+                const btn = e.target.closest('[data-remove]');
+                if (btn) removeCreator(+btn.dataset.remove);
+            });
+            document.getElementById('messageList').addEventListener('input', e => {
+                if (e.target.id && e.target.id.startsWith('msg_')) creators[+e.target.dataset.idx].msg = e.target.value;
+            });
+
+            // 「だれの提案？」は、選んだボタンをもう一度押すと取り消せる
+            const slotForms = document.getElementById('slotForms');
+            slotForms.addEventListener('pointerdown', e => {
+                const opt = e.target.closest('.by-opt');
+                if (opt) { const r = opt.querySelector('input'); r.dataset.was = r.checked ? '1' : ''; }
+            });
+            slotForms.addEventListener('click', e => {
+                const r = e.target;
+                if (r.type === 'radio' && r.dataset.was === '1') {
+                    r.checked = false;
+                    r.dataset.was = '';
+                    generateBrochure();
+                }
+            });
+
+            // 入力するたびにパンフレットへ反映（画面共有でも相手にすぐ見える）
+            let timer = null;
+            const form = document.getElementById('itineraryForm');
+            const schedule = () => { clearTimeout(timer); timer = setTimeout(generateBrochure, 150); };
+            form.addEventListener('input', schedule);
+            form.addEventListener('change', schedule);
+        }
+
         // フォーム送信ハンドラー
         function handleFormSubmit(event) {
             if (event) event.preventDefault();
@@ -635,7 +870,7 @@
             return false;
         }
 
-        // プリセット読み込み関数
+        // サンプル旅プランの読み込み（作る人の名前とひとことは消さない）
         function loadPreset(key) {
             const data = presets[key];
             if (!data) return;
@@ -647,7 +882,7 @@
             setInputValue('transportation', data.transport);
             setInputValue('tagline', data.tagline);
 
-            // デフォルトの日付サンプル設定
+            // 日付のサンプル（今日〜明日）
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -655,15 +890,13 @@
             setInputValue('startDate', `${yyyy}-${mm}-${dd}`);
             autoFillEndDate();
 
-            setInputValue('d1_morning', data.d1_morning);
-            setInputValue('d1_lunch', data.d1_lunch);
-            setInputValue('d1_afternoon', data.d1_afternoon);
-            setInputValue('d1_hotel', data.d1_hotel);
-
-            setInputValue('d2_morning', data.d2_morning);
-            setInputValue('d2_lunch', data.d2_lunch);
-            setInputValue('d2_afternoon', data.d2_afternoon);
-            setInputValue('d2_return', data.d2_return);
+            const by = data.by || {};
+            const notes = data.notes || {};
+            SLOTS.forEach(s => {
+                setInputValue(s.key, data[s.key]);
+                setRadio(`${s.key}_by`, by[s.key] || '');
+                setInputValue(`${s.key}_note`, notes[s.key] || '');
+            });
 
             setInputValue('memo', data.memo);
 
@@ -677,6 +910,58 @@
             generateBrochure();
         }
 
+        // パンフレットの予定カードを作る
+        function renderBrochureSlots() {
+            [1, 2].forEach(day => {
+                const box = document.getElementById(`outDay${day}Slots`);
+                if (!box) return;
+                box.replaceChildren();
+                SLOTS.filter(s => s.day === day).forEach(s => {
+                    const text = getInputValue(s.key);
+                    const note = getInputValue(`${s.key}_note`);
+                    const by = getRadio(`${s.key}_by`);
+
+                    const card = el('div', 'b-slot');
+                    const top = el('div', 'b-slot-top');
+                    top.appendChild(el('span', `b-chip th-chip${day}`, s.label));
+                    if (by) {
+                        const b = el('span', `b-by by-${by}`);
+                        b.append(el('i', 'fa-solid fa-lightbulb mr-1'),
+                            by === 'both' ? `${bothLabel()}考えました` : `${byLabel(by)}の提案`);
+                        top.appendChild(b);
+                    }
+                    card.appendChild(top);
+                    card.appendChild(el('p', text ? 'b-plan' : 'b-plan text-slate-500', text || '（これから決めます）'));
+                    if (note) {
+                        const n = el('p', 'b-note');
+                        n.append(el('i', 'fa-solid fa-comment-dots mr-1 text-slate-500'), note);
+                        card.appendChild(n);
+                    }
+                    box.appendChild(card);
+                });
+            });
+        }
+
+        // ふたりからのひとこと・作った人
+        function renderBrochureVoices() {
+            const box = document.getElementById('outMessages');
+            box.replaceChildren();
+            const withMsg = creators.filter(c => c.msg.trim());
+            withMsg.forEach(c => {
+                const p = el('p', 'b-msg');
+                p.append(el('span', 'b-msg-name', `${c.name.trim() || GEN_LABEL[c.gen]}：`), c.msg.trim());
+                box.appendChild(p);
+            });
+            document.getElementById('outMessagesBox').style.display = withMsg.length ? '' : 'none';
+
+            const title = document.getElementById('outMessagesTitle');
+            title.replaceChildren(el('i', 'fa-solid fa-comments'),
+                creators.length <= 2 ? ' ふたりからのひとこと' : ' みんなからのひとこと');
+
+            const names = creators.map(c => c.name.trim()).filter(Boolean);
+            setTextContent('outCreators', names.length ? names.join('・') : '（名前を入れてください）');
+        }
+
         // パンフレットのUI更新
         function generateBrochure() {
             try {
@@ -685,25 +970,15 @@
                 const season = getInputValue('season', 'spring');
                 const style = getInputValue('travelStyle', '夫婦・カップル旅');
                 const transport = getInputValue('transportation', '新幹線・電車');
-                const tagline = getInputValue('tagline', '心躍る素敵なひとときを過ごす旅');
+                const tagline = getInputValue('tagline', '心おどる、すてきなひとときを過ごす旅');
 
                 const startDate = getInputValue('startDate');
                 const endDate = getInputValue('endDate');
                 const formattedDateText = formatTravelDates(startDate, endDate);
 
-                const d1m = getInputValue('d1_morning', '午前: 出発〜現地到着');
-                const d1l = getInputValue('d1_lunch', '昼食: 名物料理ランチ');
-                const d1a = getInputValue('d1_afternoon', '午後: 観光スポット散策');
-                const d1h = getInputValue('d1_hotel', '夕方: 宿チェックイン・夕食・温泉');
+                const memo = getInputValue('memo');
 
-                const d2m = getInputValue('d2_morning', '午前: 朝食〜名所巡り');
-                const d2l = getInputValue('d2_lunch', '昼食: 人気カフェ・ローカルフード');
-                const d2a = getInputValue('d2_afternoon', '午後: お買い物・街歩き');
-                const d2r = getInputValue('d2_return', '夕方: お土産を買って帰路へ');
-
-                const memo = getInputValue('memo', '特別なお土産の確認、集合時間の事前確認を忘れずに。');
-
-                // DOMへの反映
+                // DOMへの反映（すべて textContent）
                 setTextContent('outDestination', dest);
                 setTextContent('outTagline', tagline);
                 setTextContent('outRoute', `${origin} 発 → ${dest}`);
@@ -713,17 +988,11 @@
                 if (tIcon) tIcon.className = `fa-solid ${transportIcons[transport] || 'fa-bus-simple'} th-icon`;
                 setTextContent('outStyle', style);
 
-                setTextContent('outD1Morning', d1m);
-                setTextContent('outD1Lunch', d1l);
-                setTextContent('outD1Afternoon', d1a);
-                setTextContent('outD1Hotel', d1h);
-
-                setTextContent('outD2Morning', d2m);
-                setTextContent('outD2Lunch', d2l);
-                setTextContent('outD2Afternoon', d2a);
-                setTextContent('outD2Return', d2r);
+                renderBrochureSlots();
+                renderBrochureVoices();
 
                 setTextContent('outMemo', memo);
+                document.getElementById('outMemoBox').style.display = memo ? '' : 'none';
 
                 // 季節バッジの更新
                 const badgeElem = document.getElementById('headerSeasonBadge');
@@ -742,8 +1011,11 @@
             }
         }
 
-        // 初期表示で箱根プリセットをロード
+        // 初期表示：フォームを組み立てて、箱根のサンプルを読み込む
         window.onload = function() {
+            renderSlotForms();
+            renderCreators();
+            setupFormEvents();
             loadPreset('hakone');
         };
     </script>
