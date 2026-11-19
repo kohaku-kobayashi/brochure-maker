@@ -106,6 +106,8 @@
         .b-tagline { font-size: 18px; line-height: 1.5; }
         .b-day-title { font-size: 20px; line-height: 1.4; }
         .b-photo-label { font-size: 15px; font-weight: 700; }
+        .b-pace { display: inline-flex; align-items: center; gap: 4px; padding: 2px 12px; border-radius: 999px; background: #ecfdf5; color: #065f46; border: 1.5px solid #34d399; }
+        html.print-mode .b-pace { padding: 0 2.5mm; }
 
         /* 見本の旅ボタン（ヘッダー） */
         .preset-btn {
@@ -288,6 +290,8 @@
                         <div>
                             <label for="travelStyle" class="f-label">だれと行く旅？</label>
                             <select id="travelStyle" class="f-input">
+                                <option value="祖父母と孫の旅">祖父母と孫の旅</option>
+                                <option value="三世代旅">三世代旅（祖父母・親・子）</option>
                                 <option value="夫婦・カップル旅">夫婦・カップル旅</option>
                                 <option value="のんびり一人旅">のんびり一人旅</option>
                                 <option value="女子旅・友人旅">女子旅・友人旅</option>
@@ -295,6 +299,35 @@
                             </select>
                         </div>
                     </div>
+                    <!-- ゆったり度 -->
+                    <fieldset class="bg-white border-2 border-emerald-200 rounded-xl p-3 space-y-3">
+                        <legend class="f-label px-1"><i class="fa-solid fa-mug-hot text-emerald-700 mr-1"></i>ゆったり度（体にやさしい旅にする）</legend>
+                        <div>
+                            <label for="paceWalk" class="f-label">歩く量</label>
+                            <select id="paceWalk" class="f-input">
+                                <option value="">決めない</option>
+                                <option value="少なめ">少なめ（乗り物を多めに）</option>
+                                <option value="ふつう">ふつう</option>
+                                <option value="たっぷり">たっぷり歩く</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="paceRest" class="f-label">休けい</label>
+                            <select id="paceRest" class="f-input">
+                                <option value="">決めない</option>
+                                <option value="こまめに">こまめに休む（1時間に1回ほど）</option>
+                                <option value="ときどき">ときどき休む</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="paceStairs" class="f-label">階段・坂道</label>
+                            <select id="paceStairs" class="f-input">
+                                <option value="">決めない</option>
+                                <option value="なるべく少なく">なるべく少なく（エレベーターを使う）</option>
+                                <option value="気にしない">気にしない</option>
+                            </select>
+                        </div>
+                    </fieldset>
                     <div>
                         <label for="transportation" class="f-label">おもな乗り物</label>
                         <select id="transportation" class="f-input">
@@ -391,6 +424,9 @@
 
                 <!-- スケジュール・行程表メイン内容 -->
                 <div class="b-body p-6 sm:p-8 space-y-8">
+
+                    <!-- ゆったり度 -->
+                    <div id="outPace" class="flex flex-wrap items-center gap-2 b-small"></div>
                     
                     <!-- DAY 1 -->
                     <div class="b-day relative pl-6 border-l-4 th-line1 space-y-4">
@@ -575,7 +611,7 @@
                 startDate: '',
                 endDate: '',
                 season: 'autumn',
-                style: '夫婦・カップル旅',
+                style: '祖父母と孫の旅', paceWalk: '少なめ', paceRest: 'こまめに', paceStairs: 'なるべく少なく',
                 transport: '新幹線・特急電車',
                 tagline: '静寂の森と温泉、紅葉に染まる山々を巡る癒しのひととき',
                 d1_morning: 'ロマンスカーで箱根湯本へ。箱根登山電車で強羅方面へ移動',
@@ -928,6 +964,9 @@
             setInputValue('season', data.season);
             setInputValue('travelStyle', data.style);
             setInputValue('transportation', data.transport);
+            setInputValue('paceWalk', data.paceWalk || '');
+            setInputValue('paceRest', data.paceRest || '');
+            setInputValue('paceStairs', data.paceStairs || '');
             setInputValue('tagline', data.tagline);
 
             // 日付のサンプル（今日〜明日）
@@ -1010,6 +1049,30 @@
             setTextContent('outCreators', names.length ? names.join('・') : '（名前を入れてください）');
         }
 
+        // ゆったり度の札（選んだものだけ表示）
+        function renderPace() {
+            const box = document.getElementById('outPace');
+            box.replaceChildren();
+            const items = [
+                ['paceWalk', 'fa-person-walking', '歩く量'],
+                ['paceRest', 'fa-mug-hot', '休けい'],
+                ['paceStairs', 'fa-stairs', '階段・坂道']
+            ];
+            items.forEach(([id, icon, label]) => {
+                const v = getInputValue(id);
+                if (!v) return;
+                const chip = el('span', 'b-pace');
+                chip.append(el('i', `fa-solid ${icon}`), ` ${label}：`, el('b', null, v));
+                box.appendChild(chip);
+            });
+            if (box.children.length) {
+                box.prepend(el('span', 'font-bold th-memo-title', 'ゆったり度'));
+                box.style.display = '';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
         // 書いた文章が全部見えるように、入力欄の高さを中身に合わせる
         function fitTextareas() {
             document.querySelectorAll('textarea.f-input').forEach(t => {
@@ -1024,7 +1087,7 @@
                 const origin = getInputValue('origin', '出発地');
                 const dest = getInputValue('destination', '目的地');
                 const season = getInputValue('season', 'spring');
-                const style = getInputValue('travelStyle', '夫婦・カップル旅');
+                const style = getInputValue('travelStyle', '祖父母と孫の旅');
                 const transport = getInputValue('transportation', '新幹線・電車');
                 const tagline = getInputValue('tagline', '心おどる、すてきなひとときを過ごす旅');
 
@@ -1046,6 +1109,7 @@
 
                 renderBrochureSlots();
                 renderBrochureVoices();
+                renderPace();
                 fitTextareas();
 
                 setTextContent('outMemo', memo);
@@ -1178,7 +1242,7 @@
         const STORAGE_KEY = 'brochure-maker:plan';
         const SAVE_FORMAT = 'brochure-maker';
         const SAVE_VERSION = 1;
-        const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'tagline', 'memo'];
+        const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs', 'tagline', 'memo'];
         const IMAGE_IDS = ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'];
         let saveTimer = null;
         let restoring = false;
@@ -1210,7 +1274,7 @@
                 const f = st.fields || {};
                 BASIC_FIELDS.forEach(id => setInputValue(id, f[id]));
                 // 古いファイルや手で書いたファイルで選択肢にない値が来たら、最初の選択肢に戻す
-                ['season', 'travelStyle', 'transportation'].forEach(id => {
+                ['season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs'].forEach(id => {
                     const e = document.getElementById(id);
                     if (e && e.selectedIndex < 0) e.selectedIndex = 0;
                 });
@@ -1314,7 +1378,7 @@
             if (!confirm('白紙にすると、いま書いている内容は消えます。\n（必要なら先に「ファイルに保存」してください）\n白紙にしますか？')) return;
             applyState({
                 format: SAVE_FORMAT, version: SAVE_VERSION,
-                fields: { season: getInputValue('season', 'spring'), travelStyle: '夫婦・カップル旅', transportation: '新幹線・特急電車' },
+                fields: { season: getInputValue('season', 'spring'), travelStyle: '祖父母と孫の旅', transportation: '新幹線・特急電車' },
                 slots: {}, creators: [], images: {}
             });
             saveNow();
