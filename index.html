@@ -202,11 +202,11 @@
             <!-- サンプル旅プラン -->
             <div class="flex flex-wrap items-center gap-2">
                 <span class="text-base text-slate-100 font-bold mr-1"><i class="fa-solid fa-book-open text-amber-300 mr-1"></i>見本の旅：</span>
-                <button type="button" onclick="loadPreset('kyoto')" class="preset-btn">🌸 京都（春）</button>
-                <button type="button" onclick="loadPreset('fukuoka')" class="preset-btn">🍜 福岡（秋）</button>
-                <button type="button" onclick="loadPreset('hokkaido')" class="preset-btn">🌿 北海道（夏）</button>
-                <button type="button" onclick="loadPreset('hakone')" class="preset-btn">🍁 箱根（秋）</button>
-                <button type="button" onclick="loadPreset('kanazawa')" class="preset-btn">❄️ 金沢（冬）</button>
+                <button type="button" onclick="usePreset('kyoto')" class="preset-btn">🌸 京都（春）</button>
+                <button type="button" onclick="usePreset('fukuoka')" class="preset-btn">🍜 福岡（秋）</button>
+                <button type="button" onclick="usePreset('hokkaido')" class="preset-btn">🌿 北海道（夏）</button>
+                <button type="button" onclick="usePreset('hakone')" class="preset-btn">🍁 箱根（秋）</button>
+                <button type="button" onclick="usePreset('kanazawa')" class="preset-btn">❄️ 金沢（冬）</button>
             </div>
         </div>
     </header>
@@ -227,6 +227,19 @@
                 <i class="fa-solid fa-microphone text-emerald-700 mr-1"></i>
                 <b>マイクのボタン</b>を押して話すと、文字になります。話し終わると自動で止まります。
             </p>
+
+            <!-- 保存と引き継ぎ -->
+            <div class="bg-amber-50 p-4 rounded-xl border-2 border-amber-200 space-y-3">
+                <h3 class="f-section"><i class="fa-solid fa-floppy-disk text-amber-800 mr-2"></i>保存と引き継ぎ</h3>
+                <p class="f-help">書いた内容は、この端末に<b>自動で保存</b>されます。次の回に続きを作るときや、ほかの端末に移すときは「ファイルに保存」してください。</p>
+                <p id="saveStatus" class="f-help font-bold text-amber-900" aria-live="polite"></p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="exportPlan()" class="btn-sub"><i class="fa-solid fa-download"></i> ファイルに保存</button>
+                    <button type="button" onclick="document.getElementById('importFile').click()" class="btn-sub"><i class="fa-solid fa-folder-open"></i> ファイルを開く</button>
+                    <button type="button" onclick="startBlank()" class="btn-sub"><i class="fa-solid fa-file"></i> 白紙から作る</button>
+                </div>
+                <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importPlan(this)">
+            </div>
 
             <form id="itineraryForm" class="space-y-5" onsubmit="handleFormSubmit(event)">
                 <!-- いっしょに作る人 -->
@@ -1050,6 +1063,8 @@
                     brochure.classList.add(seasonConfig[season] ? `season-${season}` : 'season-spring');
                 }
 
+                scheduleSave();
+
             } catch (err) {
                 console.error('パンフレット生成中にエラーが発生しました:', err);
             }
@@ -1159,14 +1174,166 @@
             else if (mq.addListener) mq.addListener(onChange);
         }
 
-        // 初期表示：フォームを組み立てて、箱根のサンプルを読み込む
+        // ===== 保存と引き継ぎ（localStorage への自動保存 ＋ JSON ファイル） =====
+        const STORAGE_KEY = 'brochure-maker:plan';
+        const SAVE_FORMAT = 'brochure-maker';
+        const SAVE_VERSION = 1;
+        const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'tagline', 'memo'];
+        const IMAGE_IDS = ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'];
+        let saveTimer = null;
+        let restoring = false;
+
+        function collectState() {
+            const fields = {};
+            BASIC_FIELDS.forEach(id => { const e = document.getElementById(id); if (e) fields[id] = e.value; });
+            const slots = {};
+            SLOTS.forEach(s => {
+                slots[s.key] = {
+                    text: document.getElementById(s.key).value,
+                    by: getRadio(`${s.key}_by`),
+                    note: document.getElementById(`${s.key}_note`).value
+                };
+            });
+            const images = {};
+            IMAGE_IDS.forEach(id => { images[id] = document.getElementById(id).getAttribute('src'); });
+            return {
+                format: SAVE_FORMAT, version: SAVE_VERSION, savedAt: new Date().toISOString(),
+                fields, slots, images,
+                creators: creators.map(c => ({ name: c.name, gen: c.gen, msg: c.msg }))
+            };
+        }
+
+        function applyState(st) {
+            if (!st || st.format !== SAVE_FORMAT) throw new Error('このツールの保存ファイルではありません');
+            restoring = true;
+            try {
+                const f = st.fields || {};
+                BASIC_FIELDS.forEach(id => setInputValue(id, f[id]));
+                // 古いファイルや手で書いたファイルで選択肢にない値が来たら、最初の選択肢に戻す
+                ['season', 'travelStyle', 'transportation'].forEach(id => {
+                    const e = document.getElementById(id);
+                    if (e && e.selectedIndex < 0) e.selectedIndex = 0;
+                });
+                const sl = st.slots || {};
+                SLOTS.forEach(s => {
+                    const v = sl[s.key] || {};
+                    setInputValue(s.key, v.text);
+                    setRadio(`${s.key}_by`, ['elder', 'young', 'both'].includes(v.by) ? v.by : '');
+                    setInputValue(`${s.key}_note`, v.note);
+                });
+                const cs = Array.isArray(st.creators) ? st.creators.slice(0, MAX_CREATORS) : [];
+                creators = cs.map(c => ({
+                    name: String(c.name || ''), gen: c.gen === 'young' ? 'young' : 'elder', msg: String(c.msg || '')
+                }));
+                while (creators.length < 2) creators.push({ name: '', gen: creators.length ? 'young' : 'elder', msg: '' });
+                renderCreators();
+                const im = st.images || {};
+                IMAGE_IDS.forEach(id => {
+                    const src = im[id];
+                    // 自分で選んだ写真（data:image）か https の画像だけを受け付ける
+                    if (typeof src === 'string' && (/^data:image\//.test(src) || /^https:\/\//.test(src))) {
+                        document.getElementById(id).src = src;
+                    }
+                });
+                generateBrochure();
+            } finally {
+                restoring = false;
+            }
+        }
+
+        function showSaveStatus(text) {
+            setTextContent('saveStatus', text);
+        }
+
+        function saveNow() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(collectState()));
+                const t = new Date();
+                showSaveStatus(`✓ この端末に保存しました（${t.getHours()}時${String(t.getMinutes()).padStart(2, '0')}分）`);
+            } catch (err) {
+                showSaveStatus('この端末には保存できませんでした。「ファイルに保存」を使ってください。');
+            }
+        }
+
+        function scheduleSave() {
+            if (restoring) return;
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveNow, 600);
+        }
+
+        function loadSaved() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                applyState(JSON.parse(raw));
+                showSaveStatus('前回の続きを開きました。');
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        function exportPlan() {
+            generateBrochure();
+            const st = collectState();
+            const blob = new Blob([JSON.stringify(st, null, 2)], { type: 'application/json' });
+            const names = creators.map(c => c.name.trim()).filter(Boolean).join('と');
+            const dest = getInputValue('destination', '旅');
+            const d = new Date();
+            const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+            const fname = `旅のしおり_${dest}${names ? '_' + names : ''}_${stamp}.json`.replace(/[\\/:*?"<>|\s]/g, '');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fname;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+            showSaveStatus(`「${fname}」としてファイルに保存しました。`);
+        }
+
+        function importPlan(input) {
+            const file = input.files && input.files[0];
+            input.value = '';
+            if (!file) return;
+            if (!confirm('ファイルの内容を開くと、いま書いている内容は置きかわります。よろしいですか？')) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    applyState(JSON.parse(reader.result));
+                    saveNow();
+                    showSaveStatus(`「${file.name}」を開きました。`);
+                } catch (err) {
+                    alert('このファイルは開けませんでした。\n「ファイルに保存」で作ったファイルを選んでください。');
+                }
+            };
+            reader.onerror = () => alert('ファイルを読み込めませんでした。');
+            reader.readAsText(file);
+        }
+
+        function startBlank() {
+            if (!confirm('白紙にすると、いま書いている内容は消えます。\n（必要なら先に「ファイルに保存」してください）\n白紙にしますか？')) return;
+            applyState({
+                format: SAVE_FORMAT, version: SAVE_VERSION,
+                fields: { season: getInputValue('season', 'spring'), travelStyle: '夫婦・カップル旅', transportation: '新幹線・特急電車' },
+                slots: {}, creators: [], images: {}
+            });
+            saveNow();
+        }
+
+        // 見本の旅ボタン：今の内容が置きかわるので確認する
+        function usePreset(key) {
+            if (!confirm('見本の旅を読み込むと、いま書いている予定が置きかわります。\n（作る人の名前とひとことは残ります）\nよろしいですか？')) return;
+            loadPreset(key);
+        }
+
+        // 初期表示：フォームを組み立てて、前回の続き（なければ箱根の見本）を読み込む
         window.onload = function() {
             renderSlotForms();
             renderCreators();
             setupFormEvents();
             attachVoice(document);
             if (SpeechRec) document.getElementById('voiceHelp').hidden = false;
-            loadPreset('hakone');
+            if (!loadSaved()) loadPreset('hakone');
         };
     </script>
 </body>
