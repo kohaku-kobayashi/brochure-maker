@@ -71,18 +71,6 @@
         }
         .btn-icon:hover { background: #f1f5f9; }
 
-        /* 「だれの提案？」の選択ボタン */
-        .by-group { display: flex; flex-wrap: wrap; gap: 8px; }
-        .by-opt { position: relative; }
-        .by-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-        .by-opt > span {
-            display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 8px 16px;
-            font-size: 17px; font-weight: 700; color: #1e293b; background: #fff;
-            border: 2px solid #94a3b8; border-radius: 999px; cursor: pointer; user-select: none;
-        }
-        .by-opt > span:hover { background: #f1f5f9; }
-        .by-opt input:checked + span { background: #1e293b; color: #fff; border-color: #1e293b; }
-        .by-opt input:focus-visible + span { outline: 3px solid #f59e0b; outline-offset: 2px; }
 
         .slot-form { background: #fff; border: 2px solid #cbd5e1; border-radius: 12px; padding: 14px; }
         .slot-form .slot-name { font-size: 18px; font-weight: 700; color: #0f172a; }
@@ -95,10 +83,6 @@
         .b-slot { background: rgba(255,255,255,.85); border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; }
         .b-slot-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
         .b-chip { font-size: 15px; font-weight: 700; padding: 2px 10px; border-radius: 6px; }
-        .b-by { font-size: 15px; font-weight: 700; padding: 1px 10px; border-radius: 999px; border: 1.5px solid currentColor; }
-        .b-by.by-elder { color: #9a3412; background: #fff7ed; }
-        .b-by.by-young { color: #075985; background: #f0f9ff; }
-        .b-by.by-both  { color: #6b21a8; background: #faf5ff; }
         .b-plan { font-size: 16px; font-weight: 700; color: #1e293b; line-height: 1.55; margin-top: 4px; }
         .b-note { font-size: 16px; color: #334155; line-height: 1.55; margin-top: 4px; padding-left: 10px; border-left: 3px solid #cbd5e1; }
         .b-msg { font-size: 16px; line-height: 1.6; color: #1e293b; }
@@ -170,17 +154,16 @@
         html.print-mode .photo-box { height: 30mm; box-shadow: none; }
         html.print-mode .b-photo-label { font-size: 8pt; }
         html.print-mode .b-slot {
-            display: grid; grid-template-columns: 33mm 1fr; column-gap: 2mm;
+            display: grid; grid-template-columns: 26mm 1fr; column-gap: 2mm;
             padding: 1.6mm 2.5mm; border-radius: 2mm;
         }
         html.print-mode .b-slot-top { grid-row: 1 / span 2; flex-direction: column; align-items: flex-start; gap: 1mm; }
         html.print-mode .b-chip { font-size: 9pt; padding: 0 2mm; }
-        html.print-mode .b-by { font-size: 8.5pt; padding: 0 1.8mm; max-width: 100%; border-radius: 2mm; }
         html.print-mode .b-plan { grid-column: 2; font-size: 10.5pt; margin-top: 0; line-height: 1.45; }
         html.print-mode .b-note { grid-column: 2; font-size: 9.5pt; margin-top: .8mm; line-height: 1.45; }
         html.print-mode .b-head { font-size: 11.5pt; }
         html.print-mode #outMessagesBox { padding: 2.5mm 4mm; }
-        html.print-mode #outMessages > * + * { margin-top: 1mm !important; }
+
         html.print-mode .b-msg { font-size: 10pt; line-height: 1.5; }
         html.print-mode .b-text, html.print-mode .b-small { font-size: 9.5pt; }
 
@@ -207,7 +190,7 @@
                 <i class="fa-solid fa-compass text-amber-400 text-3xl"></i>
                 <div>
                     <h1 class="text-2xl font-bold tracking-wide">一泊2日 旅のしおり＆パンフレット作り</h1>
-                    <p class="text-base text-slate-200">ふたりで話しながら、一枚の旅のパンフレットを作りましょう</p>
+                    <p class="text-base text-slate-200">行きたい旅を書きこんで、一枚のパンフレットにしましょう</p>
                 </div>
             </div>
             <!-- サンプル旅プラン -->
@@ -253,16 +236,6 @@
             </div>
 
             <form id="itineraryForm" class="space-y-5" onsubmit="handleFormSubmit(event)">
-                <!-- いっしょに作る人 -->
-                <div class="bg-sky-50 p-4 rounded-xl border-2 border-sky-200 space-y-3">
-                    <h3 class="f-section"><i class="fa-solid fa-user-group text-sky-800 mr-2"></i>いっしょに作る人</h3>
-                    <p class="f-help">名前か呼び名を入れてください。パンフレットに「作った人」としてのります。</p>
-                    <div id="creatorList" class="space-y-3"></div>
-                    <button type="button" id="btnAddCreator" onclick="addCreator()" class="btn-sub">
-                        <i class="fa-solid fa-user-plus"></i> 作る人を増やす
-                    </button>
-                </div>
-
                 <!-- 旅の基本 -->
                 <div class="day-form space-y-4">
                     <h3 class="f-section"><i class="fa-solid fa-map-location-dot text-amber-700 mr-2"></i>どこへ、いつ行く？</h3>
@@ -299,12 +272,12 @@
                         <div>
                             <label for="travelStyle" class="f-label">だれと行く旅？</label>
                             <select id="travelStyle" class="f-input">
-                                <option value="祖父母と孫の旅">祖父母と孫の旅</option>
-                                <option value="三世代旅">三世代旅（祖父母・親・子）</option>
                                 <option value="夫婦・カップル旅">夫婦・カップル旅</option>
                                 <option value="のんびり一人旅">のんびり一人旅</option>
                                 <option value="女子旅・友人旅">女子旅・友人旅</option>
                                 <option value="ファミリー旅行">家族旅行</option>
+                                <option value="祖父母と孫の旅">祖父母と孫の旅</option>
+                                <option value="三世代旅">三世代旅（祖父母・親・子）</option>
                             </select>
                         </div>
                     </div>
@@ -352,20 +325,26 @@
                     </div>
                 </div>
 
-                <!-- 1日目・2日目の予定（JSで作る：予定／だれの提案？／ひとこと） -->
+                <!-- 1日目・2日目の予定（JSで作る：予定／ひとこと） -->
                 <div id="slotForms" class="space-y-5"></div>
 
-                <!-- ふたりからのひとこと（作る人ごとに入力欄を作る） -->
-                <div class="bg-rose-50 p-4 rounded-xl border-2 border-rose-200 space-y-3">
-                    <h3 class="f-section"><i class="fa-solid fa-comments text-rose-700 mr-2"></i><span id="messagesHeading">ふたりからのひとこと</span></h3>
-                    <p class="f-help">この旅への思いや、相手に伝えたいことを、それぞれ書きましょう。</p>
-                    <div id="messageList" class="space-y-3"></div>
-                </div>
-
-                <!-- 持ち物・気をつけること -->
-                <div>
-                    <label for="memo" class="f-label">持ち物・気をつけること</label>
-                    <textarea id="memo" rows="2" data-voice placeholder="例：歩きやすい靴、羽織るもの" class="f-input"></textarea>
+                <!-- 仕上げ -->
+                <div class="bg-rose-50 p-4 rounded-xl border-2 border-rose-200 space-y-4">
+                    <h3 class="f-section"><i class="fa-solid fa-pen-nib text-rose-700 mr-2"></i>仕上げ</h3>
+                    <div>
+                        <label for="message" class="f-label">旅へのひとこと</label>
+                        <p class="f-help mb-2">この旅で楽しみなことや、旅への思いを書きましょう。</p>
+                        <textarea id="message" rows="3" data-voice placeholder="例：紅葉を見ながら、ゆっくり温泉につかりたいです" class="f-input"></textarea>
+                    </div>
+                    <div>
+                        <label for="memo" class="f-label">持ち物・気をつけること</label>
+                        <textarea id="memo" rows="2" data-voice placeholder="例：歩きやすい靴、羽織るもの" class="f-input"></textarea>
+                    </div>
+                    <div>
+                        <label for="creatorName" class="f-label">あなたのお名前</label>
+                        <p class="f-help mb-2">パンフレットの下に「作った人」としてのります。書かなくてもかまいません。</p>
+                        <input type="text" id="creatorName" data-voice placeholder="例：山田 花子" class="f-input">
+                    </div>
                 </div>
 
                 <button type="submit" id="btnGenerate" class="w-full min-h-[56px] bg-slate-800 hover:bg-slate-900 text-white text-xl font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-400">
@@ -507,12 +486,12 @@
                         </div>
                     </div>
 
-                    <!-- ふたりからのひとこと -->
+                    <!-- 旅へのひとこと -->
                     <div id="outMessagesBox" class="th-memo rounded-xl p-4 border-2">
-                        <h4 id="outMessagesTitle" class="b-head th-memo-title flex items-center gap-2 mb-2">
-                            <i class="fa-solid fa-comments"></i> ふたりからのひとこと
+                        <h4 class="b-head th-memo-title flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-comment-dots"></i> 旅へのひとこと
                         </h4>
-                        <div id="outMessages" class="space-y-2"></div>
+                        <p id="outMessage" class="b-msg" style="white-space: pre-line"></p>
                     </div>
 
                     <!-- 持ち物・気をつけること -->
@@ -632,16 +611,12 @@
                 d2_afternoon: '箱根湯本駅前商店街でお土産探し（温泉まんじゅう・寄木細工）',
                 d2_return: '夕方の特急でゆったりと帰路へ。楽しかった旅の余韻に浸る',
                 memo: '山間部は朝夕冷え込むため羽織るものを持参すること。箱根フリーパスを活用すると移動がスムーズです。',
-                by: {
-                    d1_morning: 'young', d1_lunch: 'elder', d1_afternoon: 'both', d1_hotel: 'elder',
-                    d2_morning: 'young', d2_lunch: 'young', d2_afternoon: 'elder', d2_return: 'both'
-                },
                 notes: {
                     d1_morning: '展望席を予約すると、前の景色がよく見えて楽しいです',
                     d1_lunch: 'むかし家族で食べた、やさしい味。胃にも軽いです',
                     d1_afternoon: '黒たまごは、ひとつ食べると7年長生きすると言われています',
                     d1_hotel: 'お部屋にお風呂がある宿なら、ゆっくり休めます',
-                    d2_morning: '海賊船の上で、みんなで記念写真をとりましょう',
+                    d2_morning: '海賊船の上から見る富士山が楽しみです',
                     d2_afternoon: '寄木細工の小物入れは、手ごろでお土産にぴったり'
                 },
                 heroImg: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80',
@@ -771,52 +746,12 @@
             { key: 'd2_return',    day: 2, label: '夕方・帰り道', ph: '例：帰りの電車に乗る' }
         ];
 
-        // 世代の呼び方（文言を変えるときはここだけ直す）
-        const GEN_LABEL = { elder: '年長の方', young: '若い方' };
-        const MAX_CREATORS = 6;
-
-        // いっしょに作る人（名前・世代・ひとこと）
-        let creators = [
-            { name: '', gen: 'elder', msg: '' },
-            { name: '', gen: 'young', msg: '' }
-        ];
-
         // 小さなDOM作成ヘルパー（文字は必ず textContent で入れる）
         function el(tag, cls, text) {
             const e = document.createElement(tag);
             if (cls) e.className = cls;
             if (text != null) e.textContent = text;
             return e;
-        }
-
-        function getRadio(name) {
-            const r = document.querySelector(`input[name="${name}"]:checked`);
-            return r ? r.value : '';
-        }
-
-        function setRadio(name, value) {
-            document.querySelectorAll(`input[name="${name}"]`).forEach(r => { r.checked = (r.value === value); });
-        }
-
-        function namesOf(gen) {
-            return creators.filter(c => c.gen === gen && c.name.trim()).map(c => c.name.trim());
-        }
-
-        function bothLabel() {
-            return creators.length <= 2 ? 'ふたりで' : 'みんなで';
-        }
-
-        // 「だれの提案？」の表示名。フォーム用は「年長の方（はなこ）」、パンフレット用は「はなこ」
-        function byLabel(by, forForm) {
-            if (by === 'both') return bothLabel();
-            const names = namesOf(by);
-            if (forForm) return names.length ? `${GEN_LABEL[by]}（${names.join('・')}）` : GEN_LABEL[by];
-            return names.length ? names.join('・') : GEN_LABEL[by];
-        }
-
-        function displayName(i) {
-            const c = creators[i];
-            return (c && c.name.trim()) ? c.name.trim() : `${i + 1}人目の方`;
         }
 
         // ===== 入力フォームの組み立て =====
@@ -833,14 +768,7 @@
                     card.innerHTML = `
                         <label for="${s.key}" class="slot-name">${s.label}</label>
                         <textarea id="${s.key}" rows="2" data-voice class="f-input" placeholder="${s.ph}"></textarea>
-                        <fieldset>
-                            <legend class="f-label">だれの提案？</legend>
-                            <div class="by-group">
-                                ${['elder', 'young', 'both'].map(v => `
-                                <label class="by-opt"><input type="radio" name="${s.key}_by" value="${v}"><span><span class="by-text" data-by="${v}"></span></span></label>`).join('')}
-                            </div>
-                        </fieldset>
-                        <label for="${s.key}_note" class="f-label">ひとこと（思い出・おすすめの理由など）</label>
+                        <label for="${s.key}_note" class="f-label">ひとこと（思い出・楽しみなことなど。なくてもかまいません）</label>
                         <textarea id="${s.key}_note" rows="2" data-voice class="f-input" placeholder="例：むかし家族で行って、とてもよかった"></textarea>`;
                     wrap.appendChild(card);
                 });
@@ -848,107 +776,8 @@
             });
         }
 
-        function renderCreators() {
-            stopVoice(); // 作り直す入力欄に声が入り続けないように
-            const list = document.getElementById('creatorList');
-            list.replaceChildren();
-            creators.forEach((c, i) => {
-                const row = el('div', 'bg-white border-2 border-sky-200 rounded-xl p-3 space-y-2');
-                row.innerHTML = `
-                    <div class="flex items-center justify-between gap-2">
-                        <label for="cname_${i}" class="f-label" style="margin:0">${i + 1}人目の名前・呼び名</label>
-                        ${creators.length > 2 ? `<button type="button" class="btn-icon" data-remove="${i}" aria-label="${i + 1}人目を消す" title="この人を消す"><i class="fa-solid fa-xmark"></i></button>` : ''}
-                    </div>
-                    <input type="text" id="cname_${i}" data-idx="${i}" data-voice class="f-input" placeholder="例：はなこ、たろう">
-                    <div class="by-group" role="radiogroup" aria-label="${i + 1}人目の世代">
-                        <label class="by-opt"><input type="radio" name="cgen_${i}" data-idx="${i}" value="elder"><span>${GEN_LABEL.elder}</span></label>
-                        <label class="by-opt"><input type="radio" name="cgen_${i}" data-idx="${i}" value="young"><span>${GEN_LABEL.young}</span></label>
-                    </div>`;
-                list.appendChild(row);
-                row.querySelector(`#cname_${i}`).value = c.name;
-                setRadio(`cgen_${i}`, c.gen);
-            });
-            document.getElementById('btnAddCreator').disabled = creators.length >= MAX_CREATORS;
-            renderMessages();
-            refreshNameLabels();
-            attachVoice(document);
-        }
-
-        function renderMessages() {
-            const list = document.getElementById('messageList');
-            list.replaceChildren();
-            creators.forEach((c, i) => {
-                const row = el('div');
-                row.innerHTML = `
-                    <label for="msg_${i}" class="f-label msg-label" data-idx="${i}"></label>
-                    <textarea id="msg_${i}" data-idx="${i}" rows="2" data-voice class="f-input" placeholder="例：この旅でいっしょに見たい景色は…"></textarea>`;
-                list.appendChild(row);
-                row.querySelector('textarea').value = c.msg;
-            });
-        }
-
-        // 名前が変わったときに、提案ボタン・ひとこと欄の名前を書き換える
-        function refreshNameLabels() {
-            document.querySelectorAll('.by-text').forEach(s => { s.textContent = byLabel(s.dataset.by, true); });
-            document.querySelectorAll('.msg-label').forEach(l => { l.textContent = `${displayName(+l.dataset.idx)}からのひとこと`; });
-            setTextContent('messagesHeading', creators.length <= 2 ? 'ふたりからのひとこと' : 'みんなからのひとこと');
-        }
-
-        function addCreator() {
-            if (creators.length >= MAX_CREATORS) return;
-            creators.push({ name: '', gen: 'young', msg: '' });
-            renderCreators();
-            generateBrochure();
-            const last = document.getElementById(`cname_${creators.length - 1}`);
-            if (last) last.focus();
-        }
-
-        function removeCreator(i) {
-            if (creators.length <= 2) return;
-            if (!confirm(`「${displayName(i)}」を消しますか？\n（この人のひとことも消えます）`)) return;
-            creators.splice(i, 1);
-            renderCreators();
-            generateBrochure();
-        }
-
         function setupFormEvents() {
-            const creatorList = document.getElementById('creatorList');
-            creatorList.addEventListener('input', e => {
-                if (e.target.id && e.target.id.startsWith('cname_')) {
-                    creators[+e.target.dataset.idx].name = e.target.value;
-                    refreshNameLabels();
-                }
-            });
-            creatorList.addEventListener('change', e => {
-                if (e.target.name && e.target.name.startsWith('cgen_')) {
-                    creators[+e.target.dataset.idx].gen = e.target.value;
-                    refreshNameLabels();
-                }
-            });
-            creatorList.addEventListener('click', e => {
-                const btn = e.target.closest('[data-remove]');
-                if (btn) removeCreator(+btn.dataset.remove);
-            });
-            document.getElementById('messageList').addEventListener('input', e => {
-                if (e.target.id && e.target.id.startsWith('msg_')) creators[+e.target.dataset.idx].msg = e.target.value;
-            });
-
-            // 「だれの提案？」は、選んだボタンをもう一度押すと取り消せる
-            const slotForms = document.getElementById('slotForms');
-            slotForms.addEventListener('pointerdown', e => {
-                const opt = e.target.closest('.by-opt');
-                if (opt) { const r = opt.querySelector('input'); r.dataset.was = r.checked ? '1' : ''; }
-            });
-            slotForms.addEventListener('click', e => {
-                const r = e.target;
-                if (r.type === 'radio' && r.dataset.was === '1') {
-                    r.checked = false;
-                    r.dataset.was = '';
-                    generateBrochure();
-                }
-            });
-
-            // 入力するたびにパンフレットへ反映（画面共有でも相手にすぐ見える）
+            // 入力するたびにパンフレットへ反映
             let timer = null;
             const form = document.getElementById('itineraryForm');
             const schedule = () => { clearTimeout(timer); timer = setTimeout(generateBrochure, 150); };
@@ -963,7 +792,7 @@
             return false;
         }
 
-        // サンプル旅プランの読み込み（作る人の名前とひとことは消さない）
+        // 見本の旅の読み込み（お名前と「旅へのひとこと」は消さない）
         function loadPreset(key) {
             const data = presets[key];
             if (!data) return;
@@ -986,11 +815,9 @@
             setInputValue('startDate', `${yyyy}-${mm}-${dd}`);
             autoFillEndDate();
 
-            const by = data.by || {};
             const notes = data.notes || {};
             SLOTS.forEach(s => {
                 setInputValue(s.key, data[s.key]);
-                setRadio(`${s.key}_by`, by[s.key] || '');
                 setInputValue(`${s.key}_note`, notes[s.key] || '');
             });
 
@@ -1015,17 +842,10 @@
                 SLOTS.filter(s => s.day === day).forEach(s => {
                     const text = getInputValue(s.key);
                     const note = getInputValue(`${s.key}_note`);
-                    const by = getRadio(`${s.key}_by`);
 
                     const card = el('div', 'b-slot');
                     const top = el('div', 'b-slot-top');
                     top.appendChild(el('span', `b-chip th-chip${day}`, s.label));
-                    if (by) {
-                        const b = el('span', `b-by by-${by}`);
-                        b.append(el('i', 'fa-solid fa-lightbulb mr-1'),
-                            by === 'both' ? `${bothLabel()}考えた` : `${byLabel(by)}の提案`);
-                        top.appendChild(b);
-                    }
                     card.appendChild(top);
                     card.appendChild(el('p', text ? 'b-plan' : 'b-plan text-slate-500', text || '（これから決めます）'));
                     if (note) {
@@ -1038,25 +858,15 @@
             });
         }
 
-        // ふたりからのひとこと・作った人
+        // 旅へのひとこと・作った人
         function renderBrochureVoices() {
-            const box = document.getElementById('outMessages');
-            box.replaceChildren();
-            const withMsg = creators.filter(c => c.msg.trim());
-            withMsg.forEach(c => {
-                const p = el('p', 'b-msg');
-                p.append(el('span', 'b-msg-name', `${c.name.trim() || GEN_LABEL[c.gen]}：`), c.msg.trim());
-                box.appendChild(p);
-            });
-            document.getElementById('outMessagesBox').style.display = withMsg.length ? '' : 'none';
+            const msg = getInputValue('message');
+            setTextContent('outMessage', msg);
+            document.getElementById('outMessagesBox').style.display = msg ? '' : 'none';
 
-            const title = document.getElementById('outMessagesTitle');
-            title.replaceChildren(el('i', 'fa-solid fa-comments'),
-                creators.length <= 2 ? ' ふたりからのひとこと' : ' みんなからのひとこと');
-
-            const names = creators.map(c => c.name.trim()).filter(Boolean);
-            setTextContent('outCreators', names.length ? names.join('・') : '（名前を入れてください）');
-            document.getElementById('outCreators').parentNode.classList.toggle('creators-empty', !names.length);
+            const name = getInputValue('creatorName');
+            setTextContent('outCreators', name || '（お名前）');
+            document.getElementById('outCreators').parentNode.classList.toggle('creators-empty', !name);
         }
 
         // ゆったり度の札（選んだものだけ表示）
@@ -1097,7 +907,7 @@
                 const origin = getInputValue('origin', '出発地');
                 const dest = getInputValue('destination', '目的地');
                 const season = getInputValue('season', 'spring');
-                const style = getInputValue('travelStyle', '祖父母と孫の旅');
+                const style = getInputValue('travelStyle', '夫婦・カップル旅');
                 const transport = getInputValue('transportation', '新幹線・電車');
                 const tagline = getInputValue('tagline', '心おどる、すてきなひとときを過ごす旅');
 
@@ -1251,8 +1061,8 @@
         // ===== 保存と引き継ぎ（localStorage への自動保存 ＋ JSON ファイル） =====
         const STORAGE_KEY = 'brochure-maker:plan';
         const SAVE_FORMAT = 'brochure-maker';
-        const SAVE_VERSION = 1;
-        const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs', 'tagline', 'memo'];
+        const SAVE_VERSION = 2;
+        const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs', 'tagline', 'memo', 'message', 'creatorName'];
         const IMAGE_IDS = ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'];
         let saveTimer = null;
         let restoring = false;
@@ -1264,7 +1074,6 @@
             SLOTS.forEach(s => {
                 slots[s.key] = {
                     text: document.getElementById(s.key).value,
-                    by: getRadio(`${s.key}_by`),
                     note: document.getElementById(`${s.key}_note`).value
                 };
             });
@@ -1272,8 +1081,7 @@
             IMAGE_IDS.forEach(id => { images[id] = document.getElementById(id).getAttribute('src'); });
             return {
                 format: SAVE_FORMAT, version: SAVE_VERSION, savedAt: new Date().toISOString(),
-                fields, slots, images,
-                creators: creators.map(c => ({ name: c.name, gen: c.gen, msg: c.msg }))
+                fields, slots, images
             };
         }
 
@@ -1292,15 +1100,8 @@
                 SLOTS.forEach(s => {
                     const v = sl[s.key] || {};
                     setInputValue(s.key, v.text);
-                    setRadio(`${s.key}_by`, ['elder', 'young', 'both'].includes(v.by) ? v.by : '');
                     setInputValue(`${s.key}_note`, v.note);
                 });
-                const cs = Array.isArray(st.creators) ? st.creators.slice(0, MAX_CREATORS) : [];
-                creators = cs.map(c => ({
-                    name: String(c.name || ''), gen: c.gen === 'young' ? 'young' : 'elder', msg: String(c.msg || '')
-                }));
-                while (creators.length < 2) creators.push({ name: '', gen: creators.length ? 'young' : 'elder', msg: '' });
-                renderCreators();
                 const im = st.images || {};
                 IMAGE_IDS.forEach(id => {
                     const src = im[id];
@@ -1351,7 +1152,7 @@
             generateBrochure();
             const st = collectState();
             const blob = new Blob([JSON.stringify(st, null, 2)], { type: 'application/json' });
-            const names = creators.map(c => c.name.trim()).filter(Boolean).join('と');
+            const names = getInputValue('creatorName');
             const dest = getInputValue('destination', '旅');
             const d = new Date();
             const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
@@ -1388,8 +1189,8 @@
             if (!confirm('白紙にすると、いま書いている内容は消えます。\n（必要なら先に「ファイルに保存」してください）\n白紙にしますか？')) return;
             applyState({
                 format: SAVE_FORMAT, version: SAVE_VERSION,
-                fields: { season: getInputValue('season', 'spring'), travelStyle: '祖父母と孫の旅', transportation: '新幹線・特急電車' },
-                slots: {}, creators: [], images: {}
+                fields: { season: getInputValue('season', 'spring'), travelStyle: '夫婦・カップル旅', transportation: '新幹線・特急電車', creatorName: getInputValue('creatorName') },
+                slots: {}, images: {}
             });
             saveNow();
         }
@@ -1450,14 +1251,13 @@
 
         // 見本の旅ボタン：今の内容が置きかわるので確認する
         function usePreset(key) {
-            if (!confirm('見本の旅を読み込むと、いま書いている予定が置きかわります。\n（作る人の名前とひとことは残ります）\nよろしいですか？')) return;
+            if (!confirm('見本の旅を読み込むと、いま書いている予定が置きかわります。\n（お名前と「旅へのひとこと」は残ります）\nよろしいですか？')) return;
             loadPreset(key);
         }
 
         // 初期表示：フォームを組み立てて、前回の続き（なければ箱根の見本）を読み込む
         window.onload = function() {
             renderSlotForms();
-            renderCreators();
             setupFormEvents();
             attachVoice(document);
             if (SpeechRec) document.getElementById('voiceHelp').hidden = false;
