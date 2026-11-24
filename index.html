@@ -110,6 +110,13 @@
         .btn-mic.listening { color: #fff; background: #dc2626; border-color: #dc2626; animation: micPulse 1.2s ease-in-out infinite; }
         [hidden] { display: none !important; }
 
+        /* Wikipedia の説明と出典 */
+        .b-intro { background: rgba(255,255,255,.9); border-color: var(--soft); }
+        .b-credit { font-size: 14px; line-height: 1.5; color: #475569; }
+        html.print-mode .b-intro { padding: 2.5mm 4mm; }
+        html.print-mode .b-intro .b-text { font-size: 10pt; line-height: 1.5; }
+        html.print-mode .b-credit { font-size: 7.5pt; }
+
         /* 写真がないときの枠（季節の色） */
         .ph-box {
             display: none; position: absolute; inset: 0; z-index: 4; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -266,6 +273,17 @@
                         <div>
                             <label for="destination" class="f-label">行き先</label>
                             <input type="text" id="destination" data-voice placeholder="例：京都、箱根" class="f-input">
+                            <!-- Wikipedia から写真と説明をさがす -->
+                            <div id="wikiBox" class="mt-2 bg-white border-2 border-indigo-200 rounded-xl p-3 space-y-2" hidden>
+                                <p class="f-help"><i class="fa-brands fa-wikipedia-w text-indigo-700 mr-1"></i>行き先を書くと、Wikipedia から写真と説明をさがして入れます。<span class="text-slate-500">（行き先の名前だけを Wikipedia に送ります）</span></p>
+                                <p id="wikiStatus" class="f-help font-bold text-indigo-900" aria-live="polite"></p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" id="wikiNext" onclick="wikiNextMain()" class="btn-sub" hidden><i class="fa-solid fa-rotate"></i> ちがう候補にする</button>
+                                    <button type="button" id="wikiShuffle" onclick="wikiShuffleNearby()" class="btn-sub" hidden><i class="fa-solid fa-images"></i> まわりの写真を入れかえる</button>
+                                    <button type="button" id="wikiOff" onclick="wikiTurnOff()" class="btn-sub" hidden><i class="fa-solid fa-ban"></i> 使わない</button>
+                                    <button type="button" id="wikiSearch" onclick="wikiSearch(true)" class="btn-sub" hidden><i class="fa-solid fa-magnifying-glass"></i> <span>さがす</span></button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -434,6 +452,15 @@
 
                     <!-- ゆったり度 -->
                     <div id="outPace" class="flex flex-wrap items-center gap-2 b-small"></div>
+
+                    <!-- 行き先のしょうかい（Wikipedia） -->
+                    <div id="outIntro" class="b-intro rounded-xl p-4 border-2" hidden>
+                        <h4 class="b-head th-memo-title flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-book-open"></i> <span><span id="outIntroTitle"></span>って、どんなところ？</span>
+                        </h4>
+                        <p id="outIntroText" class="b-text text-slate-800"></p>
+                        <p class="b-credit mt-1">出典：Wikipedia「<a id="outIntroLink" target="_blank" rel="noopener" class="underline"></a>」</p>
+                    </div>
                     
                     <!-- DAY 1 -->
                     <div class="b-day relative pl-6 border-l-4 th-line1 space-y-4">
@@ -512,6 +539,9 @@
                         </h4>
                         <p id="outMessage" class="b-msg" style="white-space: pre-line"></p>
                     </div>
+
+                    <!-- 写真の出典（Wikimedia Commons の写真を使ったとき） -->
+                    <p id="outCredits" class="b-credit" hidden></p>
 
                     <!-- 持ち物・気をつけること -->
                     <div id="outMemoBox" class="flex items-start gap-2 b-text text-slate-700">
@@ -689,7 +719,7 @@
         //   （行き先を書きかえたら、違う場所の写真が出ないよう「写真をのせる」枠にする）
         // ・読み込めなかった写真も「写真をのせる」枠にする（別の場所の写真で代用しない）
         const DEFAULT_CAPTIONS = { d1Img1: '観光スポット', d1Img2: 'グルメ・お宿', d2Img1: '立ち寄り名所', d2Img2: '名物・お土産' };
-        let photoMeta = { presetDest: '', captions: {} };
+        let photoMeta = { source: '', presetDest: '', captions: {}, credits: {}, intro: null, wikiOff: '' };
 
         function setPhoto(id, src) {
             const img = document.getElementById(id);
@@ -722,6 +752,327 @@
                     img.alt = show ? cap : '';
                 }
             });
+            renderWikiExtras();
+        }
+
+        // ===== Wikipedia から写真と説明を取ってくる =====
+        // 気に入らなければ、ここで止めたり、動きを変えたりできます。
+        const WIKI_SETTINGS = {
+            enabled: true,          // false にすると、この機能をまるごと止める（前と同じ「写真をのせる」枠に戻る）
+            autoSearch: true,       // true: 行き先を書いたら自動でさがす ／ false: 「さがす」ボタンを押したときだけ
+            fillSmallPhotos: true,  // true: 予定の横の写真4枚にも、近くの見どころの写真を入れる
+            showIntro: true,        // true: パンフレットに「〇〇って、どんなところ？」を出す
+            nearbyRadius: 10000,    // 近くの見どころをさがす範囲（メートル。最大 10000）
+            introMaxChars: 130      // 説明文の長さの上限（文字）
+        };
+        const WIKI_API = 'https://ja.wikipedia.org/w/api.php';
+        // 旅の写真に向かないページ（鉄道・道路・会社・行事など）は名前で外す
+        const WIKI_SKIP = /(駅$|駅 \(|線$|線 \(|鉄道|電鉄|軌道|バス|営業所|自動車道|道路|インターチェンジ|ジャンクション|サービスエリア|パーキングエリア|県道|都道|府道|国道|駅伝|競走|ステークス|新聞|放送|ホールディングス|株式会社|事業所|基地|藩$|戦争|\(列車\)|空港|学校|大学|ターンパイク|スペシャル|郵便局|警察|消防|病院|役場|変電所|選挙区|一覧|中継局|送信所|放送所|グランド|発電所|浄水場|処理場)/;
+        // 近くの見どころで優先するもの／後回しにするもの
+        const WIKI_SPOT = /(寺|神社|神宮|宮|大社|堂|城|城跡|公園|庭園|園|湖|池|滝|渓谷|峡|岬|海岸|浜|温泉|橋|山|岳|島|高原|茶屋街|並木|美術館|博物館|資料館|記念館|水族館|市場|通り|商店街|遺跡|古墳|灯台)$/;
+        const WIKI_AREA = /(市|町|村|郡|区|地区)$/;
+        const WIKI_GOOD_END =/(市|町|村|温泉|神社|神宮|宮|寺|院|城|公園|庭園|湖|山|島|岳|渓谷|峡|高原|滝|浜|岬|海岸|街|茶屋街|宿)$/;
+
+        let wikiPool = null;      // { query, mains:[], mainIdx, nearby:[], nearOffset }（保存はしない）
+        let wikiStatus = 'idle';  // idle / searching / found / notfound / error / off
+        let wikiToken = 0;
+        let wikiTimer = null;
+
+        function wikiFetch(params) {
+            const p = new URLSearchParams(Object.assign({ format: 'json', formatversion: '2', origin: '*' }, params));
+            return fetch(`${WIKI_API}?${p}`).then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            });
+        }
+
+        function wikiTokens(q) {
+            return q.split(/[\s・、,，／/]+/).filter(Boolean);
+        }
+
+        function cleanTitle(t) {
+            return t.replace(/\s*\(.*\)\s*$/, '');
+        }
+
+        function shortenText(t, max) {
+            t = (t || '').replace(/\s+/g, ' ').replace(/（[^（）]*）/g, '').trim();
+            return t.length > max ? t.slice(0, max - 1) + '…' : t;
+        }
+
+        // 説明文は「。」の切れ目で短くする（文の途中で切らない）
+        function shortenSentences(t, max) {
+            t = (t || '').replace(/\s+/g, ' ').replace(/（[^（）]*）/g, '').trim();
+            const parts = t.split(/(?<=。)/);
+            let out = '';
+            for (const s of parts) {
+                if ((out + s).trim().length > max) break;
+                out += s;
+            }
+            return out.trim() || shortenText(t, max);
+        }
+
+        function pageUsable(p) {
+            return p.thumbnail && p.thumbnail.source && /^https:\/\//.test(p.thumbnail.source)
+                && !(p.pageprops && 'disambiguation' in p.pageprops) && !WIKI_SKIP.test(p.title);
+        }
+
+        function scoreMain(p, tokens) {
+            let s = -p.index * 0.05;
+            if (tokens.includes(p.title) || tokens.includes(cleanTitle(p.title))) s += 3;
+            if (tokens.some(t => p.title.startsWith(t))) s += 1;
+            if (WIKI_GOOD_END.test(cleanTitle(p.title))) s += 1;
+            if (p.coordinates && p.coordinates.length) s += 1;
+            return s;
+        }
+
+        function toItem(p) {
+            return {
+                title: p.title,
+                caption: cleanTitle(p.title),
+                thumb: p.thumbnail.source,
+                file: p.pageimage || '',
+                extract: p.extract || '',
+                url: p.fullurl || `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
+                coord: p.coordinates && p.coordinates[0] ? p.coordinates[0] : null
+            };
+        }
+
+        // 写真の作者とライセンス（表示が必要なので取ってくる）
+        async function wikiCredit(file) {
+            if (!file) return '';
+            try {
+                const j = await wikiFetch({
+                    action: 'query', titles: `File:${file}`, prop: 'imageinfo',
+                    iiprop: 'extmetadata', iiextmetadatafilter: 'Artist|LicenseShortName'
+                });
+                const page = j.query && j.query.pages && j.query.pages[0];
+                const meta = page && page.imageinfo && page.imageinfo[0] && page.imageinfo[0].extmetadata || {};
+                // Artist は HTML で返るので、文字だけにする（DOMParser はスクリプトを動かさない）
+                const artistHtml = meta.Artist ? meta.Artist.value : '';
+                const artist = artistHtml ? new DOMParser().parseFromString(artistHtml, 'text/html').body.textContent.trim() : '';
+                const lic = meta.LicenseShortName ? meta.LicenseShortName.value : '';
+                return [shortenText(artist, 40), shortenText(lic, 30)].filter(Boolean).join('／');
+            } catch (err) {
+                return '';
+            }
+        }
+
+        function setWikiStatus(state, text) {
+            wikiStatus = state;
+            setTextContent('wikiStatus', text || '');
+            refreshWikiButtons();
+        }
+
+        function refreshWikiButtons() {
+            const box = document.getElementById('wikiBox');
+            if (!box) return;
+            const dest = getInputValue('destination');
+            // 見本の行き先のままのときは出さない
+            const isPreset = photoMeta.source === 'preset' && dest === photoMeta.presetDest;
+            box.hidden = !WIKI_SETTINGS.enabled || !dest || isPreset;
+            const show = (id, on) => { const b = document.getElementById(id); if (b) b.hidden = !on; };
+            const found = wikiStatus === 'found';
+            show('wikiNext', found);
+            show('wikiShuffle', found && WIKI_SETTINGS.fillSmallPhotos);
+            show('wikiOff', found);
+            show('wikiSearch', ['idle', 'notfound', 'error', 'off'].includes(wikiStatus));
+            const label = document.querySelector('#wikiSearch span');
+            if (label) label.textContent = wikiStatus === 'idle' ? 'さがす' : 'もう一度さがす';
+        }
+
+        // 行き先が書きかわったら、少し待ってから自動でさがす
+        function scheduleWikiSearch() {
+            if (!WIKI_SETTINGS.enabled) return;
+            clearTimeout(wikiTimer);
+            const dest = getInputValue('destination');
+            if (dest === photoMeta.presetDest && (photoMeta.source === 'preset' || photoMeta.source === 'wiki')) {
+                if (photoMeta.source === 'wiki') setWikiStatus('found', `Wikipedia の「${photoMeta.intro ? photoMeta.intro.title : dest}」の写真と説明を使っています。`);
+                else refreshWikiButtons();
+                return;
+            }
+            if (!dest) { setWikiStatus('idle', ''); return; }
+            if (photoMeta.wikiOff === dest) { setWikiStatus('off', 'Wikipedia の写真と説明は使っていません。'); return; }
+            if (!WIKI_SETTINGS.autoSearch) { setWikiStatus('idle', ''); return; }
+            setWikiStatus('idle', '');
+            wikiTimer = setTimeout(() => wikiSearch(false), 1500);
+        }
+
+        async function wikiSearch(byButton) {
+            if (!WIKI_SETTINGS.enabled) return;
+            const dest = getInputValue('destination');
+            if (!dest) return;
+            if (byButton && photoMeta.wikiOff === dest) photoMeta.wikiOff = '';
+            const token = ++wikiToken;
+            setWikiStatus('searching', `「${dest}」の写真と説明をさがしています…`);
+            try {
+                const j = await wikiFetch({
+                    action: 'query', generator: 'search', gsrsearch: wikiTokens(dest).join(' '), gsrlimit: '20', gsrnamespace: '0',
+                    prop: 'pageimages|extracts|pageprops|info|coordinates', piprop: 'thumbnail|name', pithumbsize: '1000', pilimit: '20',
+                    exintro: '1', explaintext: '1', exsentences: '3', exlimit: '20', ppprop: 'disambiguation', inprop: 'url', colimit: '20'
+                });
+                if (token !== wikiToken) return; // もっと新しい検索が始まっている
+                const tokens = wikiTokens(dest);
+                const pages = (j.query && j.query.pages || []).filter(pageUsable);
+                if (!pages.length) {
+                    setWikiStatus('notfound', `「${dest}」の写真は見つかりませんでした。行き先の書き方を変えると、見つかることがあります。`);
+                    return;
+                }
+                const mains = pages.slice().sort((a, b) => scoreMain(b, tokens) - scoreMain(a, tokens)).map(toItem);
+                wikiPool = { query: dest, mains, mainIdx: 0, nearby: [], nearOffset: 0 };
+                await wikiLoadNearby(token);
+                if (token !== wikiToken) return;
+                await wikiApply();
+            } catch (err) {
+                if (token !== wikiToken) return;
+                setWikiStatus('error', 'インターネットにつながらないため、さがせませんでした。');
+            }
+        }
+
+        // 近くの見どころ（地図上の位置から半径 nearbyRadius 以内）
+        async function wikiLoadNearby(token) {
+            const pool = wikiPool;
+            const main = pool.mains[pool.mainIdx];
+            pool.nearby = [];
+            pool.nearOffset = 0;
+            const used = new Set([main.title, main.file]);
+            if (WIKI_SETTINGS.fillSmallPhotos && main.coord) {
+                try {
+                    const j = await wikiFetch({
+                        action: 'query', generator: 'geosearch', ggscoord: `${main.coord.lat}|${main.coord.lon}`,
+                        ggsradius: String(Math.min(10000, WIKI_SETTINGS.nearbyRadius)), ggslimit: '50',
+                        prop: 'pageimages|pageprops|info', piprop: 'thumbnail|name', pithumbsize: '800', pilimit: '50',
+                        ppprop: 'disambiguation', inprop: 'url'
+                    });
+                    if (token !== wikiToken) return;
+                    const nearScore = p => (WIKI_SPOT.test(cleanTitle(p.title)) ? 2 : 0) - (WIKI_AREA.test(cleanTitle(p.title)) ? 2 : 0) - p.index * 0.01;
+                    const pages = (j.query && j.query.pages || []).filter(pageUsable).sort((a, b) => nearScore(b) - nearScore(a));
+                    pages.forEach(p => {
+                        const it = toItem(p);
+                        if (used.has(it.title) || used.has(it.file)) return;
+                        used.add(it.title); used.add(it.file);
+                        pool.nearby.push(it);
+                    });
+                } catch (err) { /* 近くの見どころが取れなくても、メインだけで続ける */ }
+            }
+            // 足りないときは検索のほかの候補で補う
+            pool.mains.forEach((it, i) => {
+                if (i === pool.mainIdx || used.has(it.title) || used.has(it.file)) return;
+                used.add(it.title); used.add(it.file);
+                pool.nearby.push(it);
+            });
+        }
+
+        // 選んだ候補をパンフレットに入れる（自分の写真は上書きしない）
+        async function wikiApply() {
+            const pool = wikiPool;
+            if (!pool) return;
+            const main = pool.mains[pool.mainIdx];
+            const token = wikiToken;
+            const picks = { mainHeroImg: main };
+            if (WIKI_SETTINGS.fillSmallPhotos) {
+                ['d1Img1', 'd1Img2', 'd2Img1', 'd2Img2'].forEach((id, i) => {
+                    const n = pool.nearby.length;
+                    if (n) picks[id] = pool.nearby[(pool.nearOffset + i) % n];
+                });
+                // 候補が4つより少ないときに同じ写真が並ばないようにする
+                const seen = new Set([main.title]);
+                ['d1Img1', 'd1Img2', 'd2Img1', 'd2Img2'].forEach(id => {
+                    if (picks[id] && seen.has(picks[id].title)) delete picks[id];
+                    else if (picks[id]) seen.add(picks[id].title);
+                });
+            }
+            const captions = {};
+            const files = {};
+            IMAGE_IDS.forEach(id => {
+                const img = document.getElementById(id);
+                const isUser = /^data:image\//.test(img.getAttribute('src') || '');
+                if (isUser) return;
+                const it = picks[id];
+                setPhoto(id, it ? it.thumb : '');
+                if (it) {
+                    files[id] = it.file;
+                    if (id !== 'mainHeroImg') captions[id] = it.caption;
+                }
+            });
+            photoMeta = {
+                source: 'wiki', presetDest: pool.query, captions, credits: {}, wikiOff: '',
+                intro: { title: main.title, text: shortenSentences(main.extract, WIKI_SETTINGS.introMaxChars), url: main.url }
+            };
+            setWikiStatus('found', `Wikipedia の「${main.title}」の写真と説明を入れました。`);
+            generateBrochure();
+            // 写真の作者とライセンスをあとから取ってくる
+            const entries = await Promise.all(Object.keys(files).map(async id => [id, await wikiCredit(files[id])]));
+            if (token !== wikiToken || photoMeta.source !== 'wiki') return;
+            entries.forEach(([id, c]) => { photoMeta.credits[id] = c || 'Wikimedia Commons'; });
+            generateBrochure();
+        }
+
+        // 「ちがう候補にする」：表紙と説明を、次の候補に
+        async function wikiNextMain() {
+            if (!wikiPool || wikiPool.query !== getInputValue('destination')) { await wikiSearch(true); return; }
+            const token = ++wikiToken;
+            wikiPool.mainIdx = (wikiPool.mainIdx + 1) % wikiPool.mains.length;
+            setWikiStatus('searching', 'ほかの候補をさがしています…');
+            await wikiLoadNearby(token);
+            if (token !== wikiToken) return;
+            await wikiApply();
+        }
+
+        // 「まわりの写真を入れかえる」：予定の横の4枚だけを入れかえる
+        async function wikiShuffleNearby() {
+            if (!wikiPool || wikiPool.query !== getInputValue('destination')) { await wikiSearch(true); return; }
+            ++wikiToken;
+            const n = wikiPool.nearby.length;
+            if (n > 4) wikiPool.nearOffset = (wikiPool.nearOffset + 4) % n;
+            await wikiApply();
+        }
+
+        // 「使わない」：Wikipedia の写真と説明を外す（自分の写真は残す）
+        function wikiTurnOff() {
+            ++wikiToken;
+            const dest = getInputValue('destination');
+            IMAGE_IDS.forEach(id => {
+                const src = document.getElementById(id).getAttribute('src') || '';
+                if (!/^data:image\//.test(src)) setPhoto(id, '');
+            });
+            photoMeta = { source: '', presetDest: '', captions: {}, credits: {}, intro: null, wikiOff: dest };
+            setWikiStatus('off', 'Wikipedia の写真と説明は使っていません。');
+            generateBrochure();
+        }
+
+        // パンフレットの「どんなところ？」と写真の出典
+        function renderWikiExtras() {
+            const dest = getInputValue('destination');
+            const active = photoMeta.source === 'wiki' && photoMeta.presetDest === dest;
+            const intro = photoMeta.intro;
+            const introBox = document.getElementById('outIntro');
+            if (introBox) {
+                const showIntro = active && WIKI_SETTINGS.showIntro && intro && intro.text;
+                introBox.hidden = !showIntro;
+                if (showIntro) {
+                    setTextContent('outIntroTitle', intro.title);
+                    setTextContent('outIntroText', intro.text);
+                    const a = document.getElementById('outIntroLink');
+                    a.textContent = intro.title;
+                    a.href = intro.url;
+                }
+            }
+            const credits = [];
+            if (active) {
+                IMAGE_IDS.forEach(id => {
+                    const img = document.getElementById(id);
+                    const src = img.getAttribute('src') || '';
+                    const c = photoMeta.credits && photoMeta.credits[id];
+                    if (!c || !/^https:\/\//.test(src) || img.parentNode.classList.contains('ph-empty')) return;
+                    const name = id === 'mainHeroImg' ? (intro ? intro.title : '表紙') : (photoMeta.captions[id] || '');
+                    credits.push(`${name}（${c}）`);
+                });
+            }
+            const cr = document.getElementById('outCredits');
+            if (cr) {
+                cr.hidden = !credits.length;
+                cr.textContent = credits.length ? `写真：Wikimedia Commons より　${credits.join('、')}` : '';
+            }
         }
 
         // 往路入力時に自動で復路（翌日）をセット
@@ -835,7 +1186,7 @@
             let timer = null;
             const form = document.getElementById('itineraryForm');
             const schedule = () => { clearTimeout(timer); timer = setTimeout(generateBrochure, 150); };
-            form.addEventListener('input', schedule);
+            form.addEventListener('input', e => { schedule(); if (e.target.id === 'destination') scheduleWikiSearch(); });
             form.addEventListener('change', schedule);
         }
 
@@ -880,7 +1231,9 @@
             // 見本の写真（行き先が見本のままのときだけ表示される）
             setPhoto('mainHeroImg', data.heroImg);
             ['d1Img1', 'd1Img2', 'd2Img1', 'd2Img2'].forEach(id => setPhoto(id, data[id]));
-            photoMeta = { presetDest: data.destination, captions: Object.assign({}, data.captions) };
+            photoMeta = { source: 'preset', presetDest: data.destination, captions: Object.assign({}, data.captions), credits: {}, intro: null, wikiOff: '' };
+            ++wikiToken; clearTimeout(wikiTimer); wikiPool = null;
+            setWikiStatus('idle', '');
 
             generateBrochure();
         }
@@ -1114,7 +1467,7 @@
         // ===== 保存と引き継ぎ（localStorage への自動保存 ＋ JSON ファイル） =====
         const STORAGE_KEY = 'brochure-maker:plan';
         const SAVE_FORMAT = 'brochure-maker';
-        const SAVE_VERSION = 3;
+        const SAVE_VERSION = 4;
         const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs', 'tagline', 'memo', 'message', 'creatorName'];
         const IMAGE_IDS = ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'];
         let saveTimer = null;
@@ -1169,8 +1522,24 @@
                     const c = pm.captions && pm.captions[k];
                     if (typeof c === 'string' && c.length <= 40) caps[k] = c;
                 });
-                photoMeta = { presetDest: typeof pm.presetDest === 'string' ? pm.presetDest : '', captions: caps };
+                const str = (v, max) => (typeof v === 'string' && v.length <= max) ? v : '';
+                const credits = {};
+                IMAGE_IDS.forEach(k => { const c = str(pm.credits && pm.credits[k], 120); if (c) credits[k] = c; });
+                let intro = null;
+                if (pm.intro && typeof pm.intro === 'object') {
+                    const url = str(pm.intro.url, 500);
+                    intro = {
+                        title: str(pm.intro.title, 60), text: str(pm.intro.text, 400),
+                        url: /^https:\/\/ja\.wikipedia\.org\//.test(url) ? url : 'https://ja.wikipedia.org/'
+                    };
+                }
+                photoMeta = {
+                    source: ['preset', 'wiki'].includes(pm.source) ? pm.source : (pm.presetDest ? 'preset' : ''),
+                    presetDest: str(pm.presetDest, 200), captions: caps, credits, intro, wikiOff: str(pm.wikiOff, 200)
+                };
+                ++wikiToken; clearTimeout(wikiTimer); wikiPool = null;
                 generateBrochure();
+                scheduleWikiSearch();
             } finally {
                 restoring = false;
             }
@@ -1339,6 +1708,7 @@
             if (SpeechRec) document.getElementById('voiceHelp').hidden = false;
             setupPhotoButtons();
             if (!loadSaved()) loadPreset('hakone');
+            scheduleWikiSearch();
         };
     </script>
 </body>
