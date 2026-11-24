@@ -110,6 +110,13 @@
         .btn-mic.listening { color: #fff; background: #dc2626; border-color: #dc2626; animation: micPulse 1.2s ease-in-out infinite; }
         [hidden] { display: none !important; }
 
+        /* 自動でつくった予定の札（フォーム） */
+        .slot-form.is-auto { border-style: dashed; border-color: #f59e0b; }
+        .slot-form.is-auto .slot-name::after {
+            content: '自動でつくった案'; margin-left: 8px; padding: 1px 8px; font-size: 14px; font-weight: 700;
+            color: #92400e; background: #fef3c7; border-radius: 999px; vertical-align: middle;
+        }
+
         /* Wikipedia の説明と出典 */
         .b-intro { background: rgba(255,255,255,.9); border-color: var(--soft); }
         .b-credit { font-size: 14px; line-height: 1.5; color: #475569; }
@@ -296,16 +303,10 @@
                             <input type="date" id="endDate" class="f-input">
                         </div>
                     </div>
+                    <!-- 季節は「行く日」から自動で決める -->
+                    <input type="hidden" id="season" value="autumn">
+                    <p class="f-help"><span class="font-bold">季節：</span><span id="seasonText"></span>（行く日から自動で決まります）</p>
                     <div class="space-y-4">
-                        <div>
-                            <label for="season" class="f-label">季節</label>
-                            <select id="season" class="f-input">
-                                <option value="spring">🌸 春（桜・新緑）</option>
-                                <option value="summer">🌿 夏（川・海）</option>
-                                <option value="autumn">🍁 秋（紅葉・味覚）</option>
-                                <option value="winter">❄️ 冬（雪景色・温泉）</option>
-                            </select>
-                        </div>
                         <div>
                             <label for="travelStyle" class="f-label">だれと行く旅？</label>
                             <select id="travelStyle" class="f-input">
@@ -359,6 +360,17 @@
                     <div>
                         <label for="tagline" class="f-label">旅のテーマ（ひとことで）</label>
                         <input type="text" id="tagline" data-voice placeholder="例：紅葉と温泉で、心も体もぽかぽかに" class="f-input">
+                    </div>
+                </div>
+
+                <!-- 予定の自動作成 -->
+                <div id="planBox" class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 space-y-2">
+                    <h3 class="f-section"><i class="fa-solid fa-wand-magic-sparkles text-amber-700 mr-2"></i>予定の案</h3>
+                    <p id="planStatus" class="f-help" aria-live="polite"></p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="planMake" onclick="makePlan('keep')" class="btn-sub" hidden><i class="fa-solid fa-wand-magic-sparkles"></i> この条件で予定をつくる</button>
+                        <button type="button" id="planNext" onclick="nextPlan()" class="btn-sub" hidden><i class="fa-solid fa-rotate"></i> ちがう案にする</button>
+                        <button type="button" id="planAll" onclick="makePlan('all')" class="btn-sub" hidden><i class="fa-solid fa-eraser"></i> 書きかえた予定もつくり直す</button>
                     </div>
                 </div>
 
@@ -484,13 +496,13 @@
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d1Img1" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                     <span id="d1Img1Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-camera mr-1"></i><span id="d1Img1Cap">観光スポット</span>
+                                        <i class="fa-solid fa-location-dot mr-1"></i><span id="d1Img1Cap">観光スポット</span>
                                     </span>
                                 </div>
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d1Img2" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                     <span id="d1Img2Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-utensils mr-1"></i><span id="d1Img2Cap">グルメ・お宿</span>
+                                        <i class="fa-solid fa-location-dot mr-1"></i><span id="d1Img2Cap">グルメ・お宿</span>
                                     </span>
                                 </div>
                             </div>
@@ -519,13 +531,13 @@
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d2Img1" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                     <span id="d2Img1Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-map-location-dot mr-1"></i><span id="d2Img1Cap">立ち寄り名所</span>
+                                        <i class="fa-solid fa-location-dot mr-1"></i><span id="d2Img1Cap">立ち寄り名所</span>
                                     </span>
                                 </div>
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
                                     <img id="d2Img2" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                     <span id="d2Img2Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-bag-shopping mr-1"></i><span id="d2Img2Cap">名物・お土産</span>
+                                        <i class="fa-solid fa-location-dot mr-1"></i><span id="d2Img2Cap">名物・お土産</span>
                                     </span>
                                 </div>
                             </div>
@@ -718,7 +730,7 @@
         // ・見本の写真（https）は、行き先が見本のままのときだけ表示する
         //   （行き先を書きかえたら、違う場所の写真が出ないよう「写真をのせる」枠にする）
         // ・読み込めなかった写真も「写真をのせる」枠にする（別の場所の写真で代用しない）
-        const DEFAULT_CAPTIONS = { d1Img1: '観光スポット', d1Img2: 'グルメ・お宿', d2Img1: '立ち寄り名所', d2Img2: '名物・お土産' };
+        const DEFAULT_CAPTIONS = { d1Img1: '1日目 午前', d1Img2: '1日目 午後', d2Img1: '2日目 午前', d2Img2: '2日目 午後' };
         let photoMeta = { source: '', presetDest: '', captions: {}, credits: {}, intro: null, wikiOff: '' };
 
         function setPhoto(id, src) {
@@ -1000,6 +1012,7 @@
             };
             setWikiStatus('found', `Wikipedia の「${main.title}」の写真と説明を入れました。`);
             generateBrochure();
+            onPhotosChanged();
             // 写真の作者とライセンスをあとから取ってくる
             const entries = await Promise.all(Object.keys(files).map(async id => [id, await wikiCredit(files[id])]));
             if (token !== wikiToken || photoMeta.source !== 'wiki') return;
@@ -1038,6 +1051,7 @@
             photoMeta = { source: '', presetDest: '', captions: {}, credits: {}, intro: null, wikiOff: dest };
             setWikiStatus('off', 'Wikipedia の写真と説明は使っていません。');
             generateBrochure();
+            onPhotosChanged();
         }
 
         // パンフレットの「どんなところ？」と写真の出典
@@ -1186,8 +1200,10 @@
             let timer = null;
             const form = document.getElementById('itineraryForm');
             const schedule = () => { clearTimeout(timer); timer = setTimeout(generateBrochure, 150); };
-            form.addEventListener('input', e => { schedule(); if (e.target.id === 'destination') scheduleWikiSearch(); });
-            form.addEventListener('change', schedule);
+            const PLAN_COND = ['destination', 'origin', 'startDate', 'endDate', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs'];
+            const onCond = e => { if (PLAN_COND.includes(e.target.id)) scheduleAutoPlan(); };
+            form.addEventListener('input', e => { schedule(); if (e.target.id === 'destination') scheduleWikiSearch(); onCond(e); });
+            form.addEventListener('change', e => { schedule(); onCond(e); });
         }
 
         // フォーム送信ハンドラー
@@ -1197,6 +1213,240 @@
             return false;
         }
 
+        // ===== 季節は「行く日」から決める =====
+        const SEASON_LABEL = { spring: '🌸 春', summer: '🌿 夏', autumn: '🍁 秋', winter: '❄️ 冬' };
+        function travelMonth() {
+            const v = getInputValue('startDate');
+            const d = v ? new Date(v) : new Date();
+            return isNaN(d.getTime()) ? new Date().getMonth() + 1 : d.getMonth() + 1;
+        }
+        function seasonOfMonth(m) {
+            if (m >= 3 && m <= 5) return 'spring';
+            if (m >= 6 && m <= 8) return 'summer';
+            if (m >= 9 && m <= 11) return 'autumn';
+            return 'winter';
+        }
+        function updateSeason() {
+            const s = seasonOfMonth(travelMonth());
+            const e = document.getElementById('season');
+            if (e) e.value = s;
+            setTextContent('seasonText', SEASON_LABEL[s]);
+        }
+        // 見本の旅は、その季節のいちばん近い日付にする（京都の桜なら次の4月）
+        function nextDateForSeason(season) {
+            const md = { spring: [4, 5], summer: [7, 20], autumn: [11, 10], winter: [2, 5] }[season] || [4, 5];
+            const today = new Date();
+            const fmt = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+            // いまがその季節なら、2週間後にする（季節が変わってしまう場合は除く）
+            if (seasonOfMonth(today.getMonth() + 1) === season) {
+                const soon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
+                if (seasonOfMonth(soon.getMonth() + 1) === season) return fmt(soon);
+                const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+                if (seasonOfMonth(tomorrow.getMonth() + 1) === season) return fmt(tomorrow);
+            }
+            let d = new Date(today.getFullYear(), md[0] - 1, md[1]);
+            if (d < new Date(today.getFullYear(), today.getMonth(), today.getDate())) d = new Date(today.getFullYear() + 1, md[0] - 1, md[1]);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        // ===== 自動で入れた文の記録（書きかえられた欄は上書きしない） =====
+        let autoVals = {};   // 欄の id → 自動で入れた文
+        function setAuto(id, v) {
+            setInputValue(id, v);
+            autoVals[id] = v || '';
+        }
+        function isAuto(id) {
+            const e = document.getElementById(id);
+            if (!e) return false;
+            return e.value === '' || e.value === (autoVals[id] || '');
+        }
+
+        // ===== 予定の案をつくる =====
+        // 文の部品（ここを書きかえると、出てくる文が変わります）
+        const PLAN_WORDS = {
+            scene: { 1: '雪景色', 2: '梅の花', 3: '春の訪れ', 4: '桜', 5: '新緑', 6: 'あじさい', 7: '夏の青空', 8: '夏の景色', 9: '初秋の景色', 10: '秋晴れの景色', 11: '紅葉', 12: '冬の澄んだ空' },
+            food: {
+                spring: ['山菜や春野菜の料理', 'たけのこ料理'],
+                summer: ['冷たいおそば', '夏野菜の料理'],
+                autumn: ['きのこや新米の料理', '秋の味覚'],
+                winter: ['あたたかい鍋料理', '湯豆腐やおでん']
+            },
+            who: {
+                '祖父母と孫の旅': '孫といっしょに', '三世代旅': '家族三世代で', '夫婦・カップル旅': 'ふたりで',
+                'のんびり一人旅': 'ひとりで', '女子旅・友人旅': '友だちと', 'ファミリー旅行': '家族で'
+            },
+            trans: {
+                '新幹線・特急電車': { go: '新幹線や特急に乗って', back: '特急や新幹線で', move: '電車やバス' },
+                'ドライブ・レンタカー': { go: '車で（とちゅうのサービスエリアで休けいしながら）', back: '車で', move: '車' },
+                '飛行機＋現地バス': { go: '飛行機とバスで', back: 'バスで空港へ向かい、飛行機で', move: 'バス' },
+                'ローカル線・徒歩散策': { go: 'ふつうの電車にゆられて', back: 'ふつうの電車で', move: '電車と歩き' }
+            }
+        };
+        // 予定の枠と写真の組み合わせ（この予定の見どころの写真を、その横に出す）
+        const PHOTO_FOR_SLOT = { d1_morning: 'd1Img1', d1_afternoon: 'd1Img2', d2_morning: 'd2Img1', d2_afternoon: 'd2Img2' };
+
+        let planSeed = 0;
+        let planAuto = false;   // この行き先で、自動の予定づくりを使っているか
+        let planTimer = null;
+
+        function destShort(dest) {
+            const t = dest.split(/[\s・、]+/).filter(Boolean);
+            return t.length ? t[t.length - 1] : dest;
+        }
+
+        // 写真に出ている見どころの名前（Wikipedia のとき）。なければ一般的な言い方
+        function planSpots(dest) {
+            const short = destShort(dest);
+            const wikiOn = photoMeta.source === 'wiki' && photoMeta.presetDest === dest;
+            const generic = [`${short}の名所`, `${short}の町なみ`, '景色のよいところ', `${short}の古いお寺や神社`];
+            const spots = {};
+            Object.keys(PHOTO_FOR_SLOT).forEach((slot, i) => {
+                const cap = wikiOn ? photoMeta.captions[PHOTO_FOR_SLOT[slot]] : '';
+                spots[slot] = cap || generic[(i + planSeed) % generic.length];
+            });
+            // 歩く量が多いときに足す、もう1か所
+            let extra = '';
+            if (wikiOn && wikiPool && wikiPool.query === dest) {
+                const used = new Set(Object.values(spots));
+                const more = wikiPool.nearby.map(n => n.caption).filter(c => !used.has(c) && !WIKI_AREA.test(c));
+                extra = more[planSeed % Math.max(1, more.length)] || '';
+            }
+            return { spots, extra: extra || `${short}の町なみ` };
+        }
+
+        function buildPlan() {
+            const dest = getInputValue('destination');
+            const origin = getInputValue('origin');
+            const style = getInputValue('travelStyle');
+            const T = PLAN_WORDS.trans[getInputValue('transportation')] || PLAN_WORDS.trans['新幹線・特急電車'];
+            const walk = getInputValue('paceWalk');
+            const rest = getInputValue('paceRest');
+            const stairs = getInputValue('paceStairs');
+            const month = travelMonth();
+            const season = seasonOfMonth(month);
+            const scene = PLAN_WORDS.scene[month];
+            const foods = PLAN_WORDS.food[season];
+            const who = PLAN_WORDS.who[style] || '';
+            const short = destShort(dest);
+            const pick = (arr, i) => arr[(planSeed + i) % arr.length];
+            const { spots, extra } = planSpots(dest);
+            // 町の名前（〇〇町 など）は「町なみを散歩」にする
+            const place = s => WIKI_AREA.test(s) ? `${s}の町なみ` : s;
+            const goTo = s => walk === '少なめ' ? `タクシーで${place(s)}へ` : walk === 'たっぷり' ? `歩いて${place(s)}へ` : `${T.move}で${place(s)}へ`;
+            const see = s => walk === '少なめ' ? `${place(s)}をゆっくり見学（移動はタクシーで）` : walk === 'たっぷり' ? `${place(s)}を歩いてめぐる` : `${place(s)}を見学`;
+            const restNote = rest === 'こまめに' ? '（とちゅうでお茶を飲んでひと休み）' : rest === 'ときどき' ? '（ときどきベンチでひと休み）' : '';
+            const stairNote = stairs === 'なるべく少なく' ? '（階段や坂の少ない道を選ぶ）' : '';
+            const from = origin ? `${origin}から` : '';
+
+            const plan = {
+                d1_morning: pick([
+                    `${from}${T.go}${short}へ。着いたら${goTo(spots.d1_morning)}${stairNote}`,
+                    `${T.go}${short}へ出発。まずは${see(spots.d1_morning)}${stairNote}`
+                ], 0),
+                d1_lunch: pick([`${short}で${foods[0]}のお昼ごはん`, `${foods[0]}が食べられるお店でお昼ごはん`], 1),
+                d1_afternoon: `${see(spots.d1_afternoon)}` + (walk === 'たっぷり' ? `。そのあと${place(extra)}も歩いてめぐる` : '') + restNote,
+                d1_hotel: pick([
+                    `お宿にチェックイン。${foods[1]}の夕ごはんと温泉で、ゆっくり休む`,
+                    `早めにお宿へ。温泉につかって、${foods[1]}の夕ごはん`
+                ], 2) + (stairs === 'なるべく少なく' ? '（エレベーターのあるお宿）' : ''),
+                d2_morning: `朝ごはんのあと、${goTo(spots.d2_morning)}。${scene}を楽しむ`,
+                d2_lunch: pick([`${short}の名物料理でお昼ごはん`, `景色のよいお店でお昼ごはん`], 3),
+                d2_afternoon: `${see(spots.d2_afternoon)}。帰る前にお土産さがし` + restNote,
+                d2_return: `${T.back}帰り道へ。${who ? who + '過ごした' : '楽しかった'}旅をふりかえりながら`
+            };
+            // かっこが続くとき（…）（…）は、ひとつにまとめる
+            Object.keys(plan).forEach(k => { plan[k] = plan[k].replace(/）（/g, '、'); });
+            const tagline = `${scene}の${short}を、${who || 'ゆっくり'}${who ? 'ゆっくり' : ''}楽しむ旅`;
+            const memo = [
+                { spring: '朝晩の羽織るもの', summer: '帽子と飲み物', autumn: '朝晩の上着', winter: '手袋とすべりにくい靴' }[season],
+                walk === '少なめ' ? 'タクシー会社の電話番号をひかえておく' : '歩きやすい靴',
+                rest === 'こまめに' ? '休める場所（喫茶店・ベンチ）を先に調べておく' : '',
+                stairs === 'なるべく少なく' ? '駅やお宿のエレベーターの場所を先に確かめておく' : '',
+                style === '祖父母と孫の旅' || style === '三世代旅' ? '孫の好きなおやつ' : ''
+            ].filter(Boolean).join('、');
+            return { plan, tagline, memo };
+        }
+
+        // mode: 'keep' = 書きかえた欄は残す ／ 'all' = 全部つくり直す
+        function makePlan(mode, quiet) {
+            const dest = getInputValue('destination');
+            if (!dest) return;
+            if (mode === 'all' && !quiet && !confirm('書きかえた予定も、すべて新しい案に置きかわります。\n（ひとことの欄は消えません）\nよろしいですか？')) return;
+            const { plan, tagline, memo } = buildPlan();
+            let kept = 0;
+            SLOTS.forEach(s => {
+                if (mode === 'all' || isAuto(s.key)) setAuto(s.key, plan[s.key]);
+                else kept++;
+                // 見本などで自動で入っていた「ひとこと」は、別の場所のことなので消す（自分で書いたものは残す）
+                const nk = `${s.key}_note`;
+                const nv = document.getElementById(nk).value;
+                if (nv && nv === (autoVals[nk] || '')) setAuto(nk, '');
+            });
+            if (mode === 'all' || isAuto('tagline')) setAuto('tagline', tagline);
+            if (mode === 'all' || isAuto('memo')) setAuto('memo', memo);
+            planAuto = true;
+            updatePlanBox();
+            generateBrochure();
+        }
+
+        // 「ちがう案にする」：言い回しを変え、写真（＝見どころ）も入れかえる
+        async function nextPlan() {
+            planSeed++;
+            const dest = getInputValue('destination');
+            if (photoMeta.source === 'wiki' && photoMeta.presetDest === dest && wikiPool && wikiPool.query === dest && WIKI_SETTINGS.fillSmallPhotos) {
+                await wikiShuffleNearby();   // 写真が変わると、そのあとで予定もつくり直される
+            } else {
+                makePlan('keep', true);
+            }
+        }
+
+        // 条件が変わったら、少し待ってから予定をつくり直す
+        function canAutoPlan() {
+            const dest = getInputValue('destination');
+            if (!dest) return false;
+            const showingPreset = photoMeta.source === 'preset' && dest === photoMeta.presetDest;
+            return planAuto || !showingPreset;
+        }
+        function scheduleAutoPlan() {
+            clearTimeout(planTimer);
+            if (!canAutoPlan()) { updatePlanBox(); return; }
+            planTimer = setTimeout(() => makePlan('keep', true), 600);
+        }
+        // 写真（見どころ）が変わったときに呼ぶ
+        function onPhotosChanged() {
+            if (canAutoPlan()) makePlan('keep', true);
+        }
+
+        function updatePlanBox() {
+            const kept = SLOTS.filter(s => !isAuto(s.key)).length;
+            const dest = getInputValue('destination');
+            const show = (id, on) => { const b = document.getElementById(id); if (b) b.hidden = !on; };
+            const showingPreset = photoMeta.source === 'preset' && dest === photoMeta.presetDest && !planAuto;
+            let text;
+            if (!dest) {
+                text = '行き先を書くと、日付・だれと行く旅・ゆったり度・乗り物に合わせて、予定の案を自動でつくります。';
+            } else if (showingPreset) {
+                text = '見本の旅の予定を表示しています。条件に合わせた案にしたいときは「この条件で予定をつくる」を押してください。';
+            } else {
+                text = '条件に合わせて予定の案をつくりました。気に入らない予定は書きかえてください。書きかえた予定は、条件を変えてもそのまま残ります。';
+                if (kept) text += `（いま ${kept} つの予定を、書きかえたまま残しています）`;
+            }
+            setTextContent('planStatus', text);
+            show('planMake', !!dest && showingPreset);
+            show('planNext', !!dest && !showingPreset);
+            show('planAll', !!dest && !showingPreset && SLOTS.some(s => !isAuto(s.key)));
+        }
+
+        // 自動で入れた予定には「自動」の札をつける
+        function refreshAutoMarks() {
+            SLOTS.forEach(s => {
+                const e = document.getElementById(s.key);
+                if (!e) return;
+                const card = e.closest('.slot-form');
+                if (card) card.classList.toggle('is-auto', !!e.value && isAuto(s.key));
+            });
+        }
+
         // 見本の旅の読み込み（お名前と「旅へのひとこと」は消さない）
         function loadPreset(key) {
             const data = presets[key];
@@ -1204,29 +1454,28 @@
 
             setInputValue('origin', data.origin);
             setInputValue('destination', data.destination);
-            setInputValue('season', data.season);
             setInputValue('travelStyle', data.style);
             setInputValue('transportation', data.transport);
             setInputValue('paceWalk', data.paceWalk || '');
             setInputValue('paceRest', data.paceRest || '');
             setInputValue('paceStairs', data.paceStairs || '');
-            setInputValue('tagline', data.tagline);
 
-            // 日付のサンプル（今日〜明日）
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            setInputValue('startDate', `${yyyy}-${mm}-${dd}`);
+            // 日付：見本の季節のいちばん近い日（季節は日付から決まる）
+            setInputValue('startDate', nextDateForSeason(data.season));
             autoFillEndDate();
 
+            // 見本の文は「自動で入れた文」として扱う（条件を変えると新しい案に置きかわる）
+            autoVals = {};
+            planAuto = false;
+            planSeed = 0;
+            clearTimeout(planTimer);
+            setAuto('tagline', data.tagline);
             const notes = data.notes || {};
             SLOTS.forEach(s => {
-                setInputValue(s.key, data[s.key]);
-                setInputValue(`${s.key}_note`, notes[s.key] || '');
+                setAuto(s.key, data[s.key]);
+                setAuto(`${s.key}_note`, notes[s.key] || '');
             });
-
-            setInputValue('memo', data.memo);
+            setAuto('memo', data.memo);
 
             // 見本の写真（行き先が見本のままのときだけ表示される）
             setPhoto('mainHeroImg', data.heroImg);
@@ -1309,6 +1558,7 @@
         // パンフレットのUI更新
         function generateBrochure() {
             try {
+                updateSeason();
                 const origin = getInputValue('origin', '出発地');
                 const dest = getInputValue('destination', '目的地');
                 const season = getInputValue('season', 'spring');
@@ -1337,6 +1587,8 @@
                 renderPace();
                 updatePhotos();
                 fitTextareas();
+                refreshAutoMarks();
+                updatePlanBox();
 
                 setTextContent('outMemo', memo);
                 document.getElementById('outMemoBox').hidden = !memo;
@@ -1467,7 +1719,7 @@
         // ===== 保存と引き継ぎ（localStorage への自動保存 ＋ JSON ファイル） =====
         const STORAGE_KEY = 'brochure-maker:plan';
         const SAVE_FORMAT = 'brochure-maker';
-        const SAVE_VERSION = 4;
+        const SAVE_VERSION = 5;
         const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs', 'tagline', 'memo', 'message', 'creatorName'];
         const IMAGE_IDS = ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'];
         let saveTimer = null;
@@ -1487,7 +1739,7 @@
             IMAGE_IDS.forEach(id => { images[id] = document.getElementById(id).getAttribute('src'); });
             return {
                 format: SAVE_FORMAT, version: SAVE_VERSION, savedAt: new Date().toISOString(),
-                fields, slots, images, photoMeta
+                fields, slots, images, photoMeta, autoVals, planAuto, planSeed
             };
         }
 
@@ -1498,7 +1750,7 @@
                 const f = st.fields || {};
                 BASIC_FIELDS.forEach(id => setInputValue(id, f[id]));
                 // 古いファイルや手で書いたファイルで選択肢にない値が来たら、最初の選択肢に戻す
-                ['season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs'].forEach(id => {
+                ['travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs'].forEach(id => {
                     const e = document.getElementById(id);
                     if (e && e.selectedIndex < 0) e.selectedIndex = 0;
                 });
@@ -1537,6 +1789,16 @@
                     source: ['preset', 'wiki'].includes(pm.source) ? pm.source : (pm.presetDest ? 'preset' : ''),
                     presetDest: str(pm.presetDest, 200), captions: caps, credits, intro, wikiOff: str(pm.wikiOff, 200)
                 };
+                // 自動で入れた文の記録（書きかえた欄を守るため）
+                autoVals = {};
+                const av = (st.autoVals && typeof st.autoVals === 'object') ? st.autoVals : {};
+                [...SLOTS.map(s => s.key), ...SLOTS.map(s => `${s.key}_note`), 'tagline', 'memo'].forEach(k => {
+                    const v = str(av[k], 1000);
+                    if (v) autoVals[k] = v;
+                });
+                planAuto = st.planAuto === true;
+                planSeed = Number.isInteger(st.planSeed) && st.planSeed >= 0 ? st.planSeed : 0;
+                clearTimeout(planTimer);
                 ++wikiToken; clearTimeout(wikiTimer); wikiPool = null;
                 generateBrochure();
                 scheduleWikiSearch();
@@ -1618,7 +1880,7 @@
             if (!confirm('白紙にすると、いま書いている内容は消えます。\n（必要なら先に「ファイルに保存」してください）\n白紙にしますか？')) return;
             applyState({
                 format: SAVE_FORMAT, version: SAVE_VERSION,
-                fields: { season: getInputValue('season', 'spring'), travelStyle: '夫婦・カップル旅', transportation: '新幹線・特急電車', creatorName: getInputValue('creatorName') },
+                fields: { travelStyle: '夫婦・カップル旅', transportation: '新幹線・特急電車', creatorName: getInputValue('creatorName') },
                 slots: {}, images: {}
             });
             saveNow();
