@@ -108,6 +108,24 @@
         .btn-mic { color: #047857; border-color: #10b981; }
         .btn-mic:hover { background: #ecfdf5; }
         .btn-mic.listening { color: #fff; background: #dc2626; border-color: #dc2626; animation: micPulse 1.2s ease-in-out infinite; }
+        [hidden] { display: none !important; }
+
+        /* 写真がないときの枠（季節の色） */
+        .ph-box {
+            display: none; position: absolute; inset: 0; z-index: 4; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            width: 100%; background: var(--soft); color: var(--ink); border: 3px dashed var(--main); border-radius: inherit; cursor: pointer;
+        }
+        .ph-box:hover { filter: brightness(.97); }
+        .ph-box:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+        .ph-icon { font-size: 30px; line-height: 1; }
+        .ph-text { font-size: 17px; font-weight: 700; }
+        .ph-empty > .ph-box { display: flex; }
+        .ph-empty > img, .ph-empty > .photo-label { display: none; }
+        .photo-box.ph-empty > .photo-btn { display: none; }
+        .b-hero.ph-empty { background: linear-gradient(135deg, var(--bar) 0%, var(--main) 100%); }
+        html.print-mode .ph-box { border: 1px solid var(--main); }
+        html.print-mode .ph-text { display: none; }
+        html.print-mode .ph-icon { font-size: 22pt; opacity: .7; }
         /* 写真を変えるボタン */
         .photo-btn {
             position: absolute; top: 8px; right: 8px; z-index: 5; display: inline-flex; align-items: center; gap: 6px;
@@ -115,6 +133,7 @@
             background: rgba(255,255,255,.92); border: 2px solid #1e293b; border-radius: 999px; cursor: pointer;
         }
         .photo-btn:hover { background: #fff; }
+        .photo-box .photo-btn { top: 6px; right: 6px; min-height: 40px; padding: 4px 10px; font-size: 15px; }
         .photo-btn:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
         html.print-mode .photo-btn, html.print-mode .creators-empty { display: none !important; }
         @keyframes micPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,.5); } 50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); } }
@@ -374,7 +393,7 @@
                 
                 <!-- メインビジュアル画像付きヘッダー -->
                 <div class="b-hero relative h-56 sm:h-64 overflow-hidden bg-slate-900">
-                    <img id="mainHeroImg" src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80" alt="Main Visual" class="w-full h-full object-cover opacity-80 transition-all duration-700" onerror="handleImgError(this, 'japan')">
+                    <img id="mainHeroImg" alt="表紙の写真" class="w-full h-full object-cover opacity-80 transition-all duration-700">
                     
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8 text-white b-hero-inner">
                         <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -436,15 +455,15 @@
                             <!-- Day 1 フォトカード -->
                             <div class="md:col-span-5 flex flex-col gap-3">
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
-                                    <img id="d1Img1" src="https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=600&q=80" alt="Spot Photo" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'sightseeing')">
-                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-camera mr-1"></i>観光スポット
+                                    <img id="d1Img1" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                    <span id="d1Img1Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-camera mr-1"></i><span id="d1Img1Cap">観光スポット</span>
                                     </span>
                                 </div>
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
-                                    <img id="d1Img2" src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80" alt="Gourmet / Hotel" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'onsen')">
-                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-utensils mr-1"></i>グルメ・お宿
+                                    <img id="d1Img2" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                    <span id="d1Img2Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-utensils mr-1"></i><span id="d1Img2Cap">グルメ・お宿</span>
                                     </span>
                                 </div>
                             </div>
@@ -471,15 +490,15 @@
                             <!-- Day 2 フォトカード -->
                             <div class="md:col-span-5 flex flex-col gap-3">
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
-                                    <img id="d2Img1" src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80" alt="Spot Photo 2" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'japan')">
-                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-map-location-dot mr-1"></i>立ち寄り名所
+                                    <img id="d2Img1" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                    <span id="d2Img1Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-map-location-dot mr-1"></i><span id="d2Img1Cap">立ち寄り名所</span>
                                     </span>
                                 </div>
                                 <div class="photo-box relative rounded-xl overflow-hidden shadow-md group h-32">
-                                    <img id="d2Img2" src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80" alt="Gourmet Photo 2" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="handleImgError(this, 'food')">
-                                    <span class="absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
-                                        <i class="fa-solid fa-bag-shopping mr-1"></i>名物・お土産
+                                    <img id="d2Img2" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                    <span id="d2Img2Label" class="photo-label absolute bottom-2 left-2 bg-black/70 text-white b-photo-label px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-bag-shopping mr-1"></i><span id="d2Img2Cap">名物・お土産</span>
                                     </span>
                                 </div>
                             </div>
@@ -539,11 +558,12 @@
                 d2_afternoon: '伏見稲荷大社を巡り、お土産に生八ツ橋や抹茶菓子を購入',
                 d2_return: '京都駅から新幹線に乗車。お弁当を食べつつ思い出を振り返る',
                 memo: '桜の季節は大変混雑するため、拝観時間は早朝がおすすめです。歩きやすいスニーカー推奨。',
-                heroImg: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80',
-                d1Img1: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=600&q=80',
-                d1Img2: 'https://images.unsplash.com/photo-1578474846511-04ba529f0b88?auto=format&fit=crop&w=600&q=80',
-                d2Img1: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80',
-                d2Img2: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80'
+                heroImg: 'https://images.unsplash.com/photo-1770387795112-e2b476b15f71?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1494884020746-bd961a27fdc6?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1740982931610-9309b6e88f30?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1632923754832-60642c12a7ed?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1783192485699-618ba677e671?auto=format&fit=crop&w=600&q=80',
+                captions: { d1Img1: '桜の小道', d1Img2: '京料理', d2Img1: '嵐山・竹林の小径', d2Img2: '和菓子' }
             },
             fukuoka: {
                 origin: '羽田空港',
@@ -563,11 +583,12 @@
                 d2_afternoon: 'キャナルシティ博多でお買い物（明太子・通りもん等）',
                 d2_return: '福岡空港へ移動。空港限定スイーツを楽しみ羽田へ帰路',
                 memo: '屋台街は現金払いの店舗が多いので小銭・千円札を多めに準備すると便利です。',
-                heroImg: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80',
-                d1Img1: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80',
-                d1Img2: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80',
-                d2Img1: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80',
-                d2Img2: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=600&q=80'
+                heroImg: 'https://images.unsplash.com/photo-1618897037073-5edb010d92f5?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1647955817192-7e60588d3763?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1591325418441-ff678baf78ef?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1605472758900-3d101aaf980b?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1698110707910-6af9a3fd5d07?auto=format&fit=crop&w=600&q=80',
+                captions: { d1Img1: '神社にお参り', d1Img2: '博多ラーメン', d2Img1: '福岡タワー', d2Img2: '中洲の屋台' }
             },
             hokkaido: {
                 origin: '羽田空港',
@@ -587,11 +608,12 @@
                 d2_afternoon: 'チーズ工房でお買い物。限定スイーツを試食',
                 d2_return: '空港へ向かい、夜の便で爽やかな旅を締めくくる',
                 memo: '夏でも朝夕は肌寒いことがあるので薄手のカーディガンがあると便利です。',
-                heroImg: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80',
-                d1Img1: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-                d1Img2: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
-                d2Img1: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80',
-                d2Img2: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80'
+                heroImg: 'https://images.unsplash.com/photo-1626911635167-0b3006fbda39?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1539430416000-065144bb6a86?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1694155011869-6ec870281cfa?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1787977614953-3cee8a882c97?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1686922172452-65f39c99ea6a?auto=format&fit=crop&w=600&q=80',
+                captions: { d1Img1: '美瑛・青い池', d1Img2: '丘いっぱいの花畑', d2Img1: 'ラベンダー', d2Img2: 'ソフトクリーム' }
             },
             hakone: {
                 origin: '東京・新宿駅',
@@ -619,11 +641,12 @@
                     d2_morning: '海賊船の上から見る富士山が楽しみです',
                     d2_afternoon: '寄木細工の小物入れは、手ごろでお土産にぴったり'
                 },
-                heroImg: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80',
-                d1Img1: 'https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&w=600&q=80',
-                d1Img2: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
-                d2Img1: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80',
-                d2Img2: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80'
+                heroImg: 'https://images.unsplash.com/photo-1749352133990-67bf2a652149?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1583901362846-13c55e045708?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1771773563156-2f32863f2c7c?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1631488408876-2dc3a7312657?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1601823947179-2d2397d68d5e?auto=format&fit=crop&w=600&q=80',
+                captions: { d1Img1: '大涌谷', d1Img2: '温泉旅館', d2Img1: '芦ノ湖の海賊船', d2Img2: '箱根神社の鳥居' }
             },
             kanazawa: {
                 origin: '東京駅',
@@ -643,11 +666,12 @@
                 d2_afternoon: '長町武家屋敷跡の雪景色を歩く。和菓子作り体験',
                 d2_return: '金沢駅でお土産（九谷焼、金箔スイーツ）を購入し帰路へ',
                 memo: '冬の金沢は足元が滑りやすいため、防水加工の効いた滑りにくいブーツが必須です。',
-                heroImg: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80',
-                d1Img1: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80',
-                d1Img2: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80',
-                d2Img1: 'https://images.unsplash.com/photo-1578474846511-04ba529f0b88?auto=format&fit=crop&w=600&q=80',
-                d2Img2: 'https://images.unsplash.com/photo-1583526362016-c3137c71cc3a?auto=format&fit=crop&w=600&q=80'
+                heroImg: 'https://images.unsplash.com/photo-1773910355314-55204cc7b0ee?auto=format&fit=crop&w=1200&q=80',
+                d1Img1: 'https://images.unsplash.com/photo-1768825443209-6d7cb473dda9?auto=format&fit=crop&w=600&q=80',
+                d1Img2: 'https://images.unsplash.com/photo-1575253301299-db3f10d814dd?auto=format&fit=crop&w=600&q=80',
+                d2Img1: 'https://images.unsplash.com/photo-1764751589091-be8c49f3bdc2?auto=format&fit=crop&w=600&q=80',
+                d2Img2: 'https://images.unsplash.com/photo-1791620050914-9822a7a1eb46?auto=format&fit=crop&w=600&q=80',
+                captions: { d1Img1: '雪の兼六園', d1Img2: '海の幸', d2Img1: 'ひがし茶屋街', d2Img2: '和菓子' }
             }
         };
 
@@ -659,15 +683,45 @@
             winter: { badge: '❄️ 冬の旅プラン' }
         };
 
-        // 画像エラーフォールバック
-        function handleImgError(img, type) {
-            const fallbackImages = {
-                japan: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
-                sightseeing: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
-                food: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
-                onsen: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80'
-            };
-            img.src = fallbackImages[type] || fallbackImages.japan;
+        // ===== 写真の表示ルール =====
+        // ・自分で選んだ写真（data:image）は、いつでも表示する
+        // ・見本の写真（https）は、行き先が見本のままのときだけ表示する
+        //   （行き先を書きかえたら、違う場所の写真が出ないよう「写真をのせる」枠にする）
+        // ・読み込めなかった写真も「写真をのせる」枠にする（別の場所の写真で代用しない）
+        const DEFAULT_CAPTIONS = { d1Img1: '観光スポット', d1Img2: 'グルメ・お宿', d2Img1: '立ち寄り名所', d2Img2: '名物・お土産' };
+        let photoMeta = { presetDest: '', captions: {} };
+
+        function setPhoto(id, src) {
+            const img = document.getElementById(id);
+            if (!img) return;
+            img.dataset.broken = '';
+            if (src) img.src = src; else img.removeAttribute('src');
+        }
+
+        function updatePhotos() {
+            const dest = getInputValue('destination');
+            const presetOk = !!photoMeta.presetDest && dest === photoMeta.presetDest;
+            const season = getInputValue('season', 'spring');
+            const emoji = { spring: '🌸', summer: '🌿', autumn: '🍁', winter: '❄️' }[season] || '🌸';
+            ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'].forEach(id => {
+                const img = document.getElementById(id);
+                if (!img) return;
+                const src = img.getAttribute('src') || '';
+                const isUser = /^data:image\//.test(src);
+                const isPreset = /^https:\/\//.test(src);
+                const show = !img.dataset.broken && (isUser || (isPreset && presetOk));
+                const box = img.parentNode;
+                box.classList.toggle('ph-empty', !show);
+                const btnText = box.querySelector('.photo-btn span');
+                if (btnText) btnText.textContent = show ? '写真を変える' : '写真をのせる';
+                const icon = box.querySelector('.ph-icon');
+                if (icon) icon.textContent = emoji;
+                if (id !== 'mainHeroImg') {
+                    const cap = (show && isPreset && photoMeta.captions[id]) || DEFAULT_CAPTIONS[id];
+                    setTextContent(`${id}Cap`, cap);
+                    img.alt = show ? cap : '';
+                }
+            });
         }
 
         // 往路入力時に自動で復路（翌日）をセット
@@ -823,12 +877,10 @@
 
             setInputValue('memo', data.memo);
 
-            // 画像の更新
-            if (data.heroImg) document.getElementById('mainHeroImg').src = data.heroImg;
-            if (data.d1Img1) document.getElementById('d1Img1').src = data.d1Img1;
-            if (data.d1Img2) document.getElementById('d1Img2').src = data.d1Img2;
-            if (data.d2Img1) document.getElementById('d2Img1').src = data.d2Img1;
-            if (data.d2Img2) document.getElementById('d2Img2').src = data.d2Img2;
+            // 見本の写真（行き先が見本のままのときだけ表示される）
+            setPhoto('mainHeroImg', data.heroImg);
+            ['d1Img1', 'd1Img2', 'd2Img1', 'd2Img2'].forEach(id => setPhoto(id, data[id]));
+            photoMeta = { presetDest: data.destination, captions: Object.assign({}, data.captions) };
 
             generateBrochure();
         }
@@ -862,7 +914,7 @@
         function renderBrochureVoices() {
             const msg = getInputValue('message');
             setTextContent('outMessage', msg);
-            document.getElementById('outMessagesBox').style.display = msg ? '' : 'none';
+            document.getElementById('outMessagesBox').hidden = !msg;
 
             const name = getInputValue('creatorName');
             setTextContent('outCreators', name || '（お名前）');
@@ -887,9 +939,9 @@
             });
             if (box.children.length) {
                 box.prepend(el('span', 'font-bold th-memo-title', 'ゆったり度'));
-                box.style.display = '';
+                box.hidden = false;
             } else {
-                box.style.display = 'none';
+                box.hidden = true;
             }
         }
 
@@ -930,10 +982,11 @@
                 renderBrochureSlots();
                 renderBrochureVoices();
                 renderPace();
+                updatePhotos();
                 fitTextareas();
 
                 setTextContent('outMemo', memo);
-                document.getElementById('outMemoBox').style.display = memo ? '' : 'none';
+                document.getElementById('outMemoBox').hidden = !memo;
 
                 // 季節バッジの更新
                 const badgeElem = document.getElementById('headerSeasonBadge');
@@ -1061,7 +1114,7 @@
         // ===== 保存と引き継ぎ（localStorage への自動保存 ＋ JSON ファイル） =====
         const STORAGE_KEY = 'brochure-maker:plan';
         const SAVE_FORMAT = 'brochure-maker';
-        const SAVE_VERSION = 2;
+        const SAVE_VERSION = 3;
         const BASIC_FIELDS = ['origin', 'destination', 'startDate', 'endDate', 'season', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs', 'tagline', 'memo', 'message', 'creatorName'];
         const IMAGE_IDS = ['mainHeroImg', 'd1Img1', 'd1Img2', 'd2Img1', 'd2Img2'];
         let saveTimer = null;
@@ -1081,7 +1134,7 @@
             IMAGE_IDS.forEach(id => { images[id] = document.getElementById(id).getAttribute('src'); });
             return {
                 format: SAVE_FORMAT, version: SAVE_VERSION, savedAt: new Date().toISOString(),
-                fields, slots, images
+                fields, slots, images, photoMeta
             };
         }
 
@@ -1105,11 +1158,18 @@
                 const im = st.images || {};
                 IMAGE_IDS.forEach(id => {
                     const src = im[id];
-                    // 自分で選んだ写真（data:image）か https の画像だけを受け付ける
-                    if (typeof src === 'string' && (/^data:image\//.test(src) || /^https:\/\//.test(src))) {
-                        document.getElementById(id).src = src;
-                    }
+                    // 自分で選んだ写真（data:image）か https の画像だけを受け付ける。それ以外は空にする
+                    const ok = typeof src === 'string' && (/^data:image\//.test(src) || /^https:\/\//.test(src));
+                    setPhoto(id, ok ? src : '');
                 });
+                // 見本の写真をどの行き先で出すか（古い保存ファイルには無い → 見本の写真は出さない）
+                const pm = st.photoMeta || {};
+                const caps = {};
+                Object.keys(DEFAULT_CAPTIONS).forEach(k => {
+                    const c = pm.captions && pm.captions[k];
+                    if (typeof c === 'string' && c.length <= 40) caps[k] = c;
+                });
+                photoMeta = { presetDest: typeof pm.presetDest === 'string' ? pm.presetDest : '', captions: caps };
                 generateBrochure();
             } finally {
                 restoring = false;
@@ -1214,13 +1274,29 @@
 
             IMAGE_IDS.forEach(id => {
                 const img = document.getElementById(id);
+                const pick = () => { photoTarget = id; input.click(); };
+                // 読み込めない写真は「写真をのせる」枠にする
+                img.addEventListener('error', () => { img.dataset.broken = '1'; updatePhotos(); });
+                img.addEventListener('load', () => { img.dataset.broken = ''; });
+
                 const btn = el('button', 'no-print photo-btn');
                 btn.type = 'button';
                 btn.innerHTML = '<i class="fa-solid fa-camera"></i> <span>写真を変える</span>';
-                btn.setAttribute('aria-label', id === 'mainHeroImg' ? '表紙の写真を変える' : '写真を変える');
-                btn.addEventListener('click', () => { photoTarget = id; input.click(); });
+                btn.setAttribute('aria-label', id === 'mainHeroImg' ? '表紙の写真' : '写真');
+                btn.addEventListener('click', pick);
                 img.parentNode.appendChild(btn);
+
+                // 写真がないときに出す枠（表紙は季節の色だけ、ほかは押せる枠）
+                if (id !== 'mainHeroImg') {
+                    const ph = el('button', 'ph-box');
+                    ph.type = 'button';
+                    ph.setAttribute('aria-label', '写真をのせる');
+                    ph.innerHTML = '<span class="ph-icon" aria-hidden="true"></span><span class="ph-text"><i class="fa-solid fa-camera mr-1"></i>写真をのせる</span>';
+                    ph.addEventListener('click', pick);
+                    img.parentNode.appendChild(ph);
+                }
             });
+            updatePhotos();
         }
 
         function replacePhoto(id, file) {
@@ -1239,7 +1315,7 @@
                     canvas.width = Math.round(src.width * r);
                     canvas.height = Math.round(src.height * r);
                     canvas.getContext('2d').drawImage(src, 0, 0, canvas.width, canvas.height);
-                    document.getElementById(id).src = canvas.toDataURL('image/jpeg', 0.82);
+                    setPhoto(id, canvas.toDataURL('image/jpeg', 0.82));
                     generateBrochure();
                 };
                 src.onerror = () => alert('この写真は開けませんでした。別の写真を選んでください。');
