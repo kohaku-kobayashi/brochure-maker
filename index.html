@@ -833,7 +833,7 @@
             if (tokens.includes(p.title) || tokens.includes(cleanTitle(p.title))) s += 3;
             if (tokens.some(t => p.title.startsWith(t))) s += 1;
             if (WIKI_GOOD_END.test(cleanTitle(p.title))) s += 1;
-            if (p.coordinates && p.coordinates.length) s += 1;
+            if (p.coordinates && p.coordinates.length) s += 2;   // 地図上の位置がある＝実在の場所の可能性が高い
             return s;
         }
 
@@ -947,10 +947,12 @@
             pool.nearby = [];
             pool.nearOffset = 0;
             const used = new Set([main.title, main.file]);
-            if (WIKI_SETTINGS.fillSmallPhotos && main.coord) {
+            // メインに位置がなければ、位置のあるほかの候補を中心にする
+            const center = main.coord ? main : pool.mains.find(m => m.coord);
+            if (WIKI_SETTINGS.fillSmallPhotos && center) {
                 try {
                     const j = await wikiFetch({
-                        action: 'query', generator: 'geosearch', ggscoord: `${main.coord.lat}|${main.coord.lon}`,
+                        action: 'query', generator: 'geosearch', ggscoord: `${center.coord.lat}|${center.coord.lon}`,
                         ggsradius: String(Math.min(10000, WIKI_SETTINGS.nearbyRadius)), ggslimit: '50',
                         prop: 'pageimages|pageprops|info', piprop: 'thumbnail|name', pithumbsize: '800', pilimit: '50',
                         ppprop: 'disambiguation', inprop: 'url'
@@ -982,9 +984,15 @@
             const token = wikiToken;
             const picks = { mainHeroImg: main };
             if (WIKI_SETTINGS.fillSmallPhotos) {
+                // 「だれと行く旅？」に合う見どころ（孫なら動物園や公園 など）を先に並べる
+                const prefer = planStyle().prefer;
+                const ordered = pool.nearby
+                    .map((it, i) => ({ it, i, s: prefer && prefer.test(it.caption) ? 1 : 0 }))
+                    .sort((a, b) => b.s - a.s || a.i - b.i)
+                    .map(x => x.it);
                 ['d1Img1', 'd1Img2', 'd2Img1', 'd2Img2'].forEach((id, i) => {
-                    const n = pool.nearby.length;
-                    if (n) picks[id] = pool.nearby[(pool.nearOffset + i) % n];
+                    const n = ordered.length;
+                    if (n) picks[id] = ordered[(pool.nearOffset + i) % n];
                 });
                 // 候補が4つより少ないときに同じ写真が並ばないようにする
                 const seen = new Set([main.title]);
@@ -1037,6 +1045,17 @@
             ++wikiToken;
             const n = wikiPool.nearby.length;
             if (n > 4) wikiPool.nearOffset = (wikiPool.nearOffset + 4) % n;
+            await wikiApply();
+        }
+
+        // 「だれと行く旅？」が変わったとき：近くの見どころを選び直す（写真が変わると予定もつくり直される）
+        async function restyleWikiPhotos() {
+            const dest = getInputValue('destination');
+            if (!WIKI_SETTINGS.enabled || !WIKI_SETTINGS.fillSmallPhotos) return;
+            if (photoMeta.source !== 'wiki' || photoMeta.presetDest !== dest) return;
+            if (!wikiPool || wikiPool.query !== dest) { await wikiSearch(true); return; } // 開き直したあとは候補を取り直す
+            ++wikiToken;
+            wikiPool.nearOffset = 0;
             await wikiApply();
         }
 
@@ -1201,7 +1220,12 @@
             const form = document.getElementById('itineraryForm');
             const schedule = () => { clearTimeout(timer); timer = setTimeout(generateBrochure, 150); };
             const PLAN_COND = ['destination', 'origin', 'startDate', 'endDate', 'travelStyle', 'transportation', 'paceWalk', 'paceRest', 'paceStairs'];
-            const onCond = e => { if (PLAN_COND.includes(e.target.id)) scheduleAutoPlan(); };
+            const onCond = e => {
+                if (!PLAN_COND.includes(e.target.id)) return;
+                // 「だれと行く旅？」が変わったら、見どころ（写真）から選び直す
+                if (e.target.id === 'travelStyle' && e.type === 'change') restyleWikiPhotos();
+                scheduleAutoPlan();
+            };
             form.addEventListener('input', e => { schedule(); if (e.target.id === 'destination') scheduleWikiSearch(); onCond(e); });
             form.addEventListener('change', e => { schedule(); onCond(e); });
         }
@@ -1271,10 +1295,6 @@
                 autumn: ['きのこや新米の料理', '秋の味覚'],
                 winter: ['あたたかい鍋料理', '湯豆腐やおでん']
             },
-            who: {
-                '祖父母と孫の旅': '孫といっしょに', '三世代旅': '家族三世代で', '夫婦・カップル旅': 'ふたりで',
-                'のんびり一人旅': 'ひとりで', '女子旅・友人旅': '友だちと', 'ファミリー旅行': '家族で'
-            },
             trans: {
                 '新幹線・特急電車': { go: '新幹線や特急に乗って', back: '特急や新幹線で', move: '電車やバス' },
                 'ドライブ・レンタカー': { go: '車で（とちゅうのサービスエリアで休けいしながら）', back: '車で', move: '車' },
@@ -1282,6 +1302,69 @@
                 'ローカル線・徒歩散策': { go: 'ふつうの電車にゆられて', back: 'ふつうの電車で', move: '電車と歩き' }
             }
         };
+        // ===== 「だれと行く旅？」ごとの予定の中身 =====
+        // prefer: 近くの見どころから優先して選ぶもの（写真も予定もこれに合わせて変わる）
+        // {food} は季節の料理に置きかわる
+        const PLAN_STYLE = {
+            '祖父母と孫の旅': {
+                who: '孫といっしょに',
+                prefer: /(動物園|水族館|公園|博物館|科学館|牧場|遊園地|城|城跡)$/,
+                lunch: ['子どもも食べやすいメニューのあるお店でお昼ごはん', '孫の好きなものが選べるお店でお昼ごはん'],
+                hotel: ['和室のお宿にチェックイン。孫といっしょに温泉に入り、{food}の夕ごはん', '家族風呂のあるお宿へ。孫とゆっくり温泉、夕ごはんは{food}'],
+                plus: '孫といっしょに楽しめる体験（手作り体験など）も',
+                end: '孫といっしょに過ごした旅をふりかえりながら',
+                memo: '孫の好きなおやつ、孫の着がえ'
+            },
+            '三世代旅': {
+                who: '家族三世代で',
+                prefer: /(公園|庭園|神社|神宮|大社|水族館|動物園|博物館|城|城跡)$/,
+                lunch: ['座敷や個室のあるお店で、家族みんなでお昼ごはん', 'みんなで取り分けられる料理のお店でお昼ごはん'],
+                hotel: ['広い和室のお宿にチェックイン。{food}の夕ごはんを家族みんなで', '大きな部屋のお宿へ。温泉のあと、家族そろって{food}の夕ごはん'],
+                plus: '家族みんなで記念写真も',
+                end: '家族三世代の思い出を話しながら',
+                memo: '家族の集合写真用のカメラ、子どもの着がえ'
+            },
+            '夫婦・カップル旅': {
+                who: 'ふたりで',
+                prefer: /(庭園|美術館|寺|院|茶屋街|通り|橋|湖|滝|海岸)$/,
+                lunch: ['落ち着いたお店で{food}のお昼ごはん', '景色のよいお店で、ふたりでお昼ごはん'],
+                hotel: ['お部屋にお風呂のあるお宿にチェックイン。{food}の夕ごはんをゆっくり', '静かなお宿へ。温泉のあと、{food}の夕ごはんをふたりで'],
+                plus: '夕暮れの景色をふたりで散歩',
+                end: 'ふたりで過ごした旅をふりかえりながら',
+                memo: ''
+            },
+            'のんびり一人旅': {
+                who: 'ひとりで',
+                prefer: /(寺|院|美術館|博物館|資料館|記念館|庭園|神社)$/,
+                lunch: ['ひとりでも入りやすいお店で{food}のお昼ごはん', 'カウンターのあるお店で、名物をひとりでゆっくり'],
+                hotel: ['ひとり泊ができるお宿にチェックイン。温泉と{food}の夕ごはんで、自分の時間をゆっくり', '小さなお宿へ。温泉につかって、{food}の夕ごはん'],
+                plus: '気になったお店にふらっと立ち寄る',
+                end: 'ひとり旅の思い出をふりかえりながら',
+                memo: '読みたい本、お宿の連絡先を家族に伝えておく'
+            },
+            '女子旅・友人旅': {
+                who: '友だちと',
+                prefer: /(茶屋街|通り|商店街|市場|横丁|美術館|庭園|神社)$/,
+                lunch: ['名物を食べくらべしながらお昼ごはん', '人気のお店で、友だちとお昼ごはん'],
+                hotel: ['お宿にチェックイン。温泉のあとは{food}の夕ごはんで、おしゃべり', '温泉のあるお宿へ。{food}の夕ごはんを囲んで、ゆっくりおしゃべり'],
+                plus: '名物の食べ歩きも',
+                end: 'みんなで撮った写真を見せ合いながら',
+                memo: 'みんなで分けるおやつ'
+            },
+            'ファミリー旅行': {
+                who: '家族で',
+                prefer: /(動物園|水族館|公園|博物館|科学館|牧場|遊園地|城|城跡)$/,
+                lunch: ['子どもも食べやすいメニューのあるお店でお昼ごはん', '家族で入りやすいお店でお昼ごはん'],
+                hotel: ['家族で泊まれるお宿にチェックイン。温泉と{food}の夕ごはん', '和室のお宿へ。家族そろって{food}の夕ごはん'],
+                plus: '子どもが楽しめる体験も',
+                end: '家族で過ごした旅をふりかえりながら',
+                memo: '子どもの着がえ'
+            }
+        };
+        function planStyle() {
+            return PLAN_STYLE[getInputValue('travelStyle')] || PLAN_STYLE['夫婦・カップル旅'];
+        }
+
         // 予定の枠と写真の組み合わせ（この予定の見どころの写真を、その横に出す）
         const PHOTO_FOR_SLOT = { d1_morning: 'd1Img1', d1_afternoon: 'd1Img2', d2_morning: 'd2Img1', d2_afternoon: 'd2Img2' };
 
@@ -1326,7 +1409,9 @@
             const season = seasonOfMonth(month);
             const scene = PLAN_WORDS.scene[month];
             const foods = PLAN_WORDS.food[season];
-            const who = PLAN_WORDS.who[style] || '';
+            const P = planStyle();
+            const who = P.who;
+            const withFood = (t, f) => t.replace('{food}', f);
             const short = destShort(dest);
             const pick = (arr, i) => arr[(planSeed + i) % arr.length];
             const { spots, extra } = planSpots(dest);
@@ -1343,16 +1428,13 @@
                     `${from}${T.go}${short}へ。着いたら${goTo(spots.d1_morning)}${stairNote}`,
                     `${T.go}${short}へ出発。まずは${see(spots.d1_morning)}${stairNote}`
                 ], 0),
-                d1_lunch: pick([`${short}で${foods[0]}のお昼ごはん`, `${foods[0]}が食べられるお店でお昼ごはん`], 1),
-                d1_afternoon: `${see(spots.d1_afternoon)}` + (walk === 'たっぷり' ? `。そのあと${place(extra)}も歩いてめぐる` : '') + restNote,
-                d1_hotel: pick([
-                    `お宿にチェックイン。${foods[1]}の夕ごはんと温泉で、ゆっくり休む`,
-                    `早めにお宿へ。温泉につかって、${foods[1]}の夕ごはん`
-                ], 2) + (stairs === 'なるべく少なく' ? '（エレベーターのあるお宿）' : ''),
+                d1_lunch: withFood(pick(P.lunch, 1), foods[0]),
+                d1_afternoon: `${see(spots.d1_afternoon)}` + (walk === 'たっぷり' ? `。そのあと${place(extra)}も歩いてめぐる` : `。${P.plus}`) + restNote,
+                d1_hotel: withFood(pick(P.hotel, 2), foods[1]) + (stairs === 'なるべく少なく' ? '（エレベーターのあるお宿）' : ''),
                 d2_morning: `朝ごはんのあと、${goTo(spots.d2_morning)}。${scene}を楽しむ`,
-                d2_lunch: pick([`${short}の名物料理でお昼ごはん`, `景色のよいお店でお昼ごはん`], 3),
+                d2_lunch: withFood(pick(P.lunch, 2), foods[0]),
                 d2_afternoon: `${see(spots.d2_afternoon)}。帰る前にお土産さがし` + restNote,
-                d2_return: `${T.back}帰り道へ。${who ? who + '過ごした' : '楽しかった'}旅をふりかえりながら`
+                d2_return: `${T.back}帰り道へ。${P.end}`
             };
             // かっこが続くとき（…）（…）は、ひとつにまとめる
             Object.keys(plan).forEach(k => { plan[k] = plan[k].replace(/）（/g, '、'); });
@@ -1362,7 +1444,7 @@
                 walk === '少なめ' ? 'タクシー会社の電話番号をひかえておく' : '歩きやすい靴',
                 rest === 'こまめに' ? '休める場所（喫茶店・ベンチ）を先に調べておく' : '',
                 stairs === 'なるべく少なく' ? '駅やお宿のエレベーターの場所を先に確かめておく' : '',
-                style === '祖父母と孫の旅' || style === '三世代旅' ? '孫の好きなおやつ' : ''
+                P.memo
             ].filter(Boolean).join('、');
             return { plan, tagline, memo };
         }
